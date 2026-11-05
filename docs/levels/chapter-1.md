@@ -24,4 +24,18 @@
 
 **Shadow-memory collectible:** room 5, behind the flower-seller's statue, reachable only by Stepping into the shade of her basket. Memory: *Malar, 9, sells garlands, saving for a bronze bell.*
 
+**As built in the prototype** (metres along the walkway; walkway height 0 unless noted)
+
+| Section | Layout | What makes it work |
+|---|---|---|
+| Temple steps | Start at 2; raised blocks at 10 to 13 (1.2 m) and 14 to 17 (2.4 m) | Jump practice; B2 casts a 0.8 m shade strip, the first shade you see |
+| First jump | Gap 30 to 33.2 (3.2 m) | Jumpable, to prove jumping still works |
+| Banner gap | Gap 44 to 50.5 (6.5 m) | Banner 3 m wide at 3.2 to 5.6 m height throws shade at 52.4 to 55.4 |
+| Elephants | Terraces 66.6 to 73 and 77.6 to 84, gaps 4.6 m | Belly shade about 68 to 72.5 under each elephant |
+| Statue ledge | 88.6 to 96 at 1.0 m height | Two pairs of stone citizens; each pair throws about 1 m of shade |
+| Swinging banner | Gap 96 to 103, gantry 103.3 to 109 | Shade reachable about 40% of each 3.4 s swing |
+| Canopy court | Gaps 113 to 119.5 and 127 to 133.5 | Canopies 6 m wide at 3.4 m; shade starts about 1 m past the near pole |
+| Hall | Roof 139 to 165 at 6.2 to 7 m | Roof shade covers 141 to 167; three Walkers ahead, three chase from 146 |
+| Courtyard | 170 to 190 at 1.3 m | Aditya on a dais at 178.5; end trigger at 175.5 |
+
 **Checkpoint spacing:** never more than 2 minutes of play between checkpoints; always one before a timing challenge.

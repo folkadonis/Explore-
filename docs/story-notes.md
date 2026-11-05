@@ -79,3 +79,31 @@ Fights the player is meant to lose tend to feel unfair. Make it a **survival fig
 - **Statues and shadows.** Statues have no shadows of their own (theirs were torn away), but the prototype lets statues cast shadows, because frozen objects still block the sun. Pick one rule and state it in the bible. Recommended: **stone blocks light like any stone**; only *living* shadows were torn away.
 - **Runtime check.** 10 + 35 + 40 + 45 + 45 + 50 = 225 minutes, about 3.75 hours before the epilogue. That matches "about 3 to 4 hours."
 - **Tamil names.** Nizhal (shadow), Nizhalars, Kaalavan, and Kalyani stepwell are consistent. "Nizhal Kannadi" (shadow mirror) works well as the Mirror's formal name; keep using it in inscriptions.
+
+---
+
+## 7. New beats added in the screenplay rewrite
+
+These came out of writing the Prologue and Chapter 1 in full. They're already in `docs/scripts/`.
+
+- **The keeper's letter.** In the prologue Ilan carries a palm-leaf letter from Keeper Sendan to the palace. Kaalavan takes it, saying he'll deliver it. At the end of Ch. 1 Ilan finds it half-burnt: *"...do not let the Mirror leave the tower. The minister has asked for..."* In Ch. 2 Kayal recognises her father's handwriting. This gives Ilan's guilt a physical object and makes Kaalavan's plan visible early without a speech.
+- **Kaalavan's anklet.** He wears a child's silver anklet tied to his wrist. It's Valli's. Shown without comment in the prologue, Ch. 1 and Ch. 4; in Ch. 5 he unties it and lets it fall into the Mirror when he lets her go.
+- **Mason's marks.** Chola masons cut personal marks into the blocks they set. Ilan's father's mark (a crescent with a dot) is the solution to Mayan's door, and it's the shadow-memory Ilan finds in the Mirror itself: his father, still carving.
+- **The stone rule.** The curse turns flesh and cloth to stone; metal stays metal. Gold crowns and bells stay bright among the statues, and Aditya's crown becomes the brightest thing in the city.
+- **Birds fell.** Pigeons in flight turned to stone and shattered. It's a small, specific image that sells the curse better than a wide shot.
+
+## 8. Period accuracy
+
+The game is set around 1000 CE. Some things in the original bible, and in most "ancient India" art, are anachronistic:
+
+| Don't use | Why | Use instead |
+|---|---|---|
+| Marigold garlands | Marigolds came from the Americas in the 1500s | Kanakambaram (crossandra, native orange), jasmine, lotus, oleander |
+| Chillies, tomatoes, potatoes | New World crops | Black pepper, ginger, rice, ghee, jaggery, plantain, coconut |
+| "Kalyani stepwell" look from Gujarat or Rajasthan | Different region and era | Tamil temple tank (kulam) with stepped sides; keep the name |
+| Paper scrolls | Not used in Tamil country then | Palm-leaf manuscripts (olai chuvadi) and copper plates |
+| Devanagari script | Wrong script for the region | Tamil script, with Grantha for Sanskrit words |
+
+## 9. Visual style change
+
+The story bible specifies "PS2-era low-poly, warm sunset palette." On your direction, the target is now **realistic, AAA-level visuals**. The warm palette and violet shadows carry over, and the full specification is in `docs/art-direction.md`. The bible's image-prompt style suffix is replaced by the one in `art/prompts.md`.
