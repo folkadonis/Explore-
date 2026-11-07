@@ -83,6 +83,10 @@ body.cine .bar{height:11vh}
 #controls{position:fixed;inset:0;pointer-events:none;transition:opacity .4s}
 body.cine #controls{opacity:.15}
 body.titled #controls{opacity:0;pointer-events:none}
+/* text and effects never catch touches; the controls always sit on top */
+#sub,#sub *,#toast,#toast *,#obj,#obj *,.bar,#still,#still *,#flash,#jkflash,#jkres,#jkres *,#jkhud,#jkhud *,#jkring,#beatring,#beattarget,#death,#credits,#title,#hud,#hud *{pointer-events:none!important}
+#controls{z-index:30}
+.btn,#stickZone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 body.arena #toast{display:none}
 #stickZone{position:absolute;left:0;bottom:0;width:44%;height:80%;pointer-events:auto;touch-action:none}
 #stickBase{position:absolute;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;border:1.5px solid rgba(203,191,230,.4);
@@ -1282,7 +1286,7 @@ const held = {l:0, r:0, jump:0, step:0, cut:0}, pressed = {};
 let stickAx = 0, padAx = 0;
 const KEYMAP = {ArrowLeft:'l', KeyA:'l', ArrowRight:'r', KeyD:'r', ArrowUp:'jump', KeyW:'jump', Space:'jump',
   KeyK:'step', ShiftLeft:'step', ShiftRight:'step', KeyL:'step', KeyE:'step', KeyJ:'cut', KeyX:'cut', KeyF:'cut'};
-const press = k => { if (!held[k]) pressed[k] = 1; held[k] = 1; };
+const press = k => { pressed[k] = 1; held[k] = 1; };   // every new touch is a new press, even if a release was missed
 const buzz = ms => { try { if (TOUCH && navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
 addEventListener('keydown', e => {
   const k = KEYMAP[e.code];
@@ -1342,7 +1346,12 @@ function pollPad(){
 }
 canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (inArena && state === 'jk'){ pressed.jump = 1; buzz(8); return; } if (state !== 'play' && state !== 'jk') advance(); });
 for (const id of ['title', 'credits', 'death']) $(id).addEventListener('pointerdown', () => advance());
-addEventListener('blur', () => { for (const k in held) held[k] = 0; stickAx = 0; });
+function releaseAll(){ for (const k in held) held[k] = 0; for (const b of document.querySelectorAll('.btn.held')) b.classList.remove('held'); if (stickId !== null){ stickId = null; stickAx = 0; homeStick(); } }
+addEventListener('blur', releaseAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
+// safety net: when no finger is left on the screen, nothing can still be held
+document.addEventListener('touchend', e => { if (e.touches.length === 0) releaseAll(); }, {passive:true});
+document.addEventListener('touchcancel', e => { if (e.touches.length === 0) releaseAll(); }, {passive:true});
 $('go').textContent = TOUCH ? 'Tap to begin' : 'Press Enter to begin';
 $('keys').textContent = TOUCH ? 'Best played with your phone turned sideways' : 'Move A/D · Jump Space · Shadow Step K · Cut J · Gamepad supported';
 
@@ -2530,7 +2539,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 window.__kanchi = { get frames(){ return frames; }, get P(){ return P; }, get state(){ return state; }, get shadows(){ return shadows; }, get target(){ return target; }, get walkers(){ return walkers; },
-  advance, held, pressed, CANOPIES, get music(){ return {mood:music.mood, step:music.step}; }, get jk(){ return jk; }, get jkScore(){ return jkScore; }, toArena(){ $('title').classList.add('hide'); enterArena(); $('sub').className = ''; document.body.classList.remove('cine'); state = 'jk'; startBull(0); }, startBull(i){ startBull(i); }, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
+  advance, held, pressed, CANOPIES, get stick(){ return {id:stickId, ax:stickAx}; }, get music(){ return {mood:music.mood, step:music.step}; }, get jk(){ return jk; }, get jkScore(){ return jkScore; }, toArena(){ $('title').classList.add('hide'); enterArena(); $('sub').className = ''; document.body.classList.remove('cine'); state = 'jk'; startBull(0); }, startBull(i){ startBull(i); }, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
   skipToPlay(){ document.body.classList.remove('titled'); $('title').classList.add('hide'); $('sub').className = ''; document.body.classList.remove('cine'); state = 'play'; $('hud').classList.remove('hide'); },
   place(x, y, face=1){ P.x = x; P.y = y; P.vx = P.vy = 0; P.face = face; camPos.set(x, y + 2.5, 13); camLook.set(x, y + 1, 0); camPosT.copy(camPos); camLookT.copy(camLook); } };
 
