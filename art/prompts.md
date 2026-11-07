@@ -1,3 +1,5 @@
+> **Superseded:** use `docs/asset-generation-brief.md`, which lists every asset needed (images, textures, 3D models) with full prompts and specs.
+
 # Concept art prompts
 
 **Status:** not generated yet. The connected Higgsfield account has 0 credits. Add credits, then ask Claude to run this list. Results go in `art/`.

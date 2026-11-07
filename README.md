@@ -13,11 +13,12 @@ A third-person action-platformer with realistic, AAA-level visuals, set in Vel N
 | `docs/tamil-culture.md` | Festivals, games, food, dress and language guide, with period-accuracy rules |
 | `docs/art-direction.md` | Visual spec: lighting, palette, architecture, characters, props, avoid list |
 | `docs/levels/` | Room-by-room level designs for all five chapters |
-| `art/prompts.md` | Concept art prompts, ready to generate |
+| `docs/asset-generation-brief.md` | **What to generate next:** every image, texture and 3D model needed for realistic visuals, with Gemini prompts and GLB specs |
+| `art/prompts.md` | Earlier concept art prompts (superseded by the asset brief) |
 
 ## Playing the prototype
 
-Open `prototype/index.html` in a browser. On a phone, turn it sideways.
+Open `prototype/index.html` in a browser. The game is **vertical (9:16)**: hold your phone upright. On a computer it plays in a centred vertical column.
 
 | Action | Keyboard | Touch | Gamepad |
 |---|---|---|---|

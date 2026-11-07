@@ -19,9 +19,14 @@
   --display:'Marcellus','Palatino Linotype',Georgia,serif;
   --body:'Alegreya Sans','Trebuchet MS',system-ui,sans-serif;
 }
-html,body{height:100%;margin:0;background:var(--night);color:var(--ink);overflow:hidden;font-family:var(--body);
+html,body{height:100%;margin:0;background:radial-gradient(ellipse at 50% 40%,#2a1838,#0b0710 70%);color:var(--ink);overflow:hidden;font-family:var(--body);
   touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,calc(100vh*9/16));overflow:hidden;container-type:size;background:var(--night);
+  box-shadow:0 0 80px rgba(0,0,0,.6)}
 canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
+#rotate{display:none;position:fixed;inset:0;z-index:50;place-items:center;text-align:center;background:var(--night);font-family:var(--display);letter-spacing:.12em;font-size:15px;color:#e7defa;padding:24px}
+#rotate b{display:block;font-size:44px;margin-bottom:12px;transform:rotate(90deg)}
+@media (pointer:coarse) and (orientation:landscape){#rotate{display:grid}}
 .layer{position:fixed;inset:0;pointer-events:none}
 #hud{display:flex;justify-content:space-between;align-items:flex-start;
   padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));
@@ -30,7 +35,7 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
 #eye i{width:22px;height:10px;border-radius:50%;background:#3d3150;transition:background .2s,box-shadow .2s}
 #eye.on i{background:var(--violet);box-shadow:0 0 12px var(--violet)}
 #chap{font-family:var(--display);font-size:15px;letter-spacing:.06em;opacity:.85;text-shadow:0 1px 6px #000}
-#toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(560px,calc(100vw - 32px));
+#toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(560px,calc(100% - 32px));
   background:var(--panel);border-radius:10px;padding:10px 16px 12px;opacity:0;transition:opacity .35s;backdrop-filter:blur(4px)}
 #toast.show{opacity:1}
 #toast b{display:block;font-family:var(--display);font-weight:400;font-size:12px;letter-spacing:.14em;margin-bottom:3px}
@@ -40,27 +45,27 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
 .bar{position:fixed;left:0;right:0;height:0;background:#000;transition:height .8s cubic-bezier(.6,0,.2,1)}
 .bar.t{top:0}.bar.b{bottom:0}
 body.cine .bar{height:11vh}
-#sub{position:fixed;left:50%;bottom:calc(11vh + 18px);transform:translateX(-50%);width:min(760px,calc(100vw - 32px));text-align:center;opacity:0;transition:opacity .4s}
+#sub{position:fixed;left:50%;bottom:calc(11vh + 18px);transform:translateX(-50%);width:min(760px,calc(100% - 32px));text-align:center;opacity:0;transition:opacity .4s}
 #sub.show{opacity:1}
 #sub b{display:block;font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.18em;margin-bottom:6px}
-#sub p{margin:0;font-size:clamp(17px,2.3vw,23px);line-height:1.4;text-shadow:0 2px 10px #000,0 0 2px #000}
+#sub p{margin:0;font-size:clamp(16px,4.6cqw,22px);line-height:1.4;text-shadow:0 2px 10px #000,0 0 2px #000}
 #sub small{display:block;margin-top:10px;font-size:12px;opacity:.55;letter-spacing:.06em}
 #title{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;
   background:radial-gradient(ellipse at 50% 55%,rgba(10,6,16,.15),rgba(10,6,16,.7));transition:opacity 1s}
 #title .k{font-family:var(--display);font-size:13px;letter-spacing:.32em;color:var(--violet)}
-#title h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,8vw,88px);line-height:1;letter-spacing:.02em;
+#title h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(36px,12cqw,72px);line-height:1;letter-spacing:.02em;
   text-wrap:balance;text-shadow:0 0 40px rgba(124,58,237,.65),0 2px 0 rgba(0,0,0,.5)}
-#title .s{font-style:italic;font-size:clamp(17px,2.4vw,22px);color:#f0d9ad}
+#title .s{font-style:italic;font-size:clamp(16px,4.4cqw,21px);color:#f0d9ad}
 #title .go{margin-top:26px;font-size:15px;opacity:.75;animation:pulse 2.4s infinite}
 #title .keys{font-size:13px;opacity:.55;margin-top:6px}
 @keyframes pulse{50%{opacity:.35}}
 #death{display:grid;place-items:center;background:radial-gradient(ellipse,rgba(10,5,18,.2),rgba(10,5,18,.75));opacity:0;transition:opacity .4s}
 #death.show{opacity:1}
-#death p{font-style:italic;font-size:clamp(20px,3vw,28px);color:var(--gold);max-width:80vw;text-align:center;text-shadow:0 2px 12px #000}
+#death p{font-style:italic;font-size:clamp(19px,6cqw,27px);color:var(--gold);max-width:80%;text-align:center;text-shadow:0 2px 12px #000}
 #credits{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;background:rgba(8,5,14,.86);opacity:0;transition:opacity 1.6s}
 #credits.show{opacity:1}
 #credits .k{font-family:var(--display);letter-spacing:.3em;font-size:13px;color:var(--violet)}
-#credits h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(30px,5vw,48px)}
+#credits h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(26px,8.5cqw,44px)}
 #credits p{margin:0;font-size:17px}
 #credits .n{font-style:italic;color:#f0d9ad}
 #loading{display:grid;place-items:center;background:var(--night);font-family:var(--display);letter-spacing:.2em;font-size:14px;color:#cbbfe6;transition:opacity .8s}
@@ -68,7 +73,7 @@ body.cine .bar{height:11vh}
 .hide{opacity:0!important}
 #controls{position:fixed;inset:0;pointer-events:none;transition:opacity .4s}
 body.cine #controls{opacity:.15}
-#stickZone{position:absolute;left:0;bottom:0;width:46vw;height:80vh;pointer-events:auto;touch-action:none}
+#stickZone{position:absolute;left:0;bottom:0;width:46%;height:62%;pointer-events:auto;touch-action:none}
 #stickBase{position:absolute;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;border:1.5px solid rgba(203,191,230,.4);
   background:radial-gradient(circle,rgba(14,9,22,.12),rgba(14,9,22,.45));transition:opacity .25s}
 #stickKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px;border-radius:50%;background:rgba(244,237,226,.22);
@@ -92,7 +97,7 @@ body.cine #controls{opacity:.15}
 .btn.jump.hint::after{border-color:#f4ede2}
 @keyframes ring{0%{transform:scale(.92);opacity:1}100%{transform:scale(1.35);opacity:0}}
 @media (pointer:fine){#controls{display:none}}
-#obj{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translate(-50%,-6px);width:max-content;max-width:min(520px,calc(100vw - 32px));
+#obj{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translate(-50%,-6px);width:max-content;max-width:min(520px,calc(100% - 32px));
   display:flex;align-items:center;gap:12px;background:rgba(14,9,22,.82);border:1px solid rgba(167,139,250,.45);border-radius:12px;padding:9px 16px 9px 10px;
   opacity:0;transition:opacity .3s,transform .3s,border-color .3s;pointer-events:none}
 #obj.show{opacity:1;transform:translate(-50%,0)}
@@ -103,7 +108,7 @@ body.cine #controls{opacity:.15}
 #obj p{margin:0;font-size:16px;line-height:1.3}
 #toast{top:calc(122px + env(safe-area-inset-top,0px))}
 @media (pointer:coarse){
-  #toast{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto;max-width:max(240px,calc(100vw - 500px));padding:7px 12px 9px}
+  #toast{padding:7px 12px 9px}
   #toast p{font-size:14px} #toast b{font-size:10px}
   #obj p{font-size:14px}
 }
@@ -131,21 +136,23 @@ body.cine #controls{opacity:.15}
 #beatdot.on{background:var(--gold);box-shadow:0 0 10px var(--gold)}
 #jkring{position:fixed;left:0;top:0;width:70px;height:70px;border-radius:50%;border:3px solid var(--gold);opacity:0;pointer-events:none;box-shadow:0 0 12px rgba(233,182,92,.7)}
 #jkring.now{border-color:#fff;box-shadow:0 0 24px #fff}
-#jkflash{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%) scale(.9);font-family:var(--display);font-size:clamp(22px,4vw,34px);letter-spacing:.06em;opacity:0;
+#jkflash{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%) scale(.9);font-family:var(--display);font-size:clamp(22px,8cqw,34px);letter-spacing:.06em;opacity:0;
   transition:opacity .15s,transform .2s;pointer-events:none;text-shadow:0 2px 12px #000;white-space:nowrap}
 #jkflash.show{opacity:1;transform:translate(-50%,-50%) scale(1)} #jkflash.good{color:var(--gold)} #jkflash.bad{color:#ff8a7a}
 #jkres{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);background:rgba(14,9,22,.86);border:1px solid rgba(233,182,92,.5);border-radius:14px;
-  padding:16px 26px;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
+  padding:16px 26px;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:calc(100% - 32px)}
 #jkres.show{opacity:1} #jkres.bad{border-color:rgba(255,138,122,.5)}
 #jkres h3{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:26px} #jkres p{margin:0;font-size:15px} #jkres small{display:block;margin-top:8px;font-size:15px;color:var(--gold)}
 .btn.jump.beat{background:rgba(233,182,92,.6);transform:scale(1.07)}
 #flash{position:fixed;inset:0;background:#fff8e8;opacity:0;pointer-events:none;transition:opacity 1.6s}
 #flash.on{opacity:1;transition:none}
-@media (pointer:coarse){#jkhud .bal,#jkhud .grip{width:190px}}
+@media (pointer:coarse){#jkhud{bottom:calc(218px + env(safe-area-inset-bottom,0px))} #jkhud .bal,#jkhud .grip{width:190px}}
 @media (prefers-reduced-motion:reduce){#title .go{animation:none}}
 </style>
 </head>
 <body>
+<div id="rotate"><div><b>▯</b>TURN YOUR PHONE UPRIGHT<br>Shadows of Kanchi is played vertically</div></div>
+<div id="stage">
 <canvas id="c" aria-label="Shadows of Kanchi, Chapter 1 playable slice"></canvas>
 <div class="layer" id="hud"><div id="eye"><i></i><span id="eyeTxt">In the sun</span></div><div id="hudR"><div id="chap">I · The Coronation of Ash</div><div id="mem"><i></i><span id="memN">0/8</span><span id="tm">0:00</span></div></div></div>
 <div id="obj"><span class="ic"></span><p></p></div>
@@ -176,6 +183,7 @@ body.cine #controls{opacity:.15}
     <button class="btn jump" data-k="jump" aria-label="Jump"><span>▲</span>JUMP</button>
   </div>
 </div>
+</div>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
 "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
@@ -190,6 +198,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
+const STAGE = document.getElementById('stage');
+const SW = () => STAGE.clientWidth || innerWidth, SH = () => STAGE.clientHeight || innerHeight;
 const TOUCH = matchMedia('(pointer:coarse)').matches;
 window.addEventListener('error', e => { const el = $('err'); el.style.display = 'block'; el.textContent = 'Something failed to load: ' + e.message; });
 
@@ -303,7 +313,7 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:false, powerPreferen
 const DPR = Math.min(devicePixelRatio || 1, TOUCH ? 1.25 : 2);
 let curDPR = DPR;
 renderer.setPixelRatio(DPR);
-renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(SW(), SH());
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
@@ -312,12 +322,12 @@ const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0xc08a68, 0.0075);
-const camera = new THREE.PerspectiveCamera(38, innerWidth/innerHeight, 0.1, 1200);
+const camera = new THREE.PerspectiveCamera(54, SW()/SH(), 0.1, 1200);
 
-const rt = new THREE.WebGLRenderTarget(innerWidth*DPR, innerHeight*DPR, {type:THREE.HalfFloatType, samples: TOUCH ? 0 : 4});
+const rt = new THREE.WebGLRenderTarget(SW()*DPR, SH()*DPR, {type:THREE.HalfFloatType, samples: TOUCH ? 0 : 4});
 const composer = new EffectComposer(renderer, rt);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.35, 0.6, 0.92);
+const bloom = new UnrealBloomPass(new THREE.Vector2(SW(), SH()), 0.35, 0.6, 0.92);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 // Final grade: violet-lifted shadows, warm highlights, vignette, fine grain.
@@ -341,11 +351,12 @@ const grade = new ShaderPass({
 composer.addPass(grade);
 
 function resize(){
-  renderer.setSize(innerWidth, innerHeight);
-  composer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(SW(), SH());
+  composer.setSize(SW(), SH());
+  camera.aspect = SW()/SH(); camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
+try { new ResizeObserver(resize).observe(STAGE); } catch(e){}
 
 // =====================================================================
 // Lighting and sky
@@ -1164,7 +1175,7 @@ function makePS(ps, n, tex, blending){
   const g = new THREE.BufferGeometry();
   ps.pos = new Float32Array(n*3); ps.col = new Float32Array(n*4); ps.size = new Float32Array(n);
   g.setAttribute('position', new THREE.BufferAttribute(ps.pos, 3)); g.setAttribute('aCol', new THREE.BufferAttribute(ps.col, 4)); g.setAttribute('aSize', new THREE.BufferAttribute(ps.size, 1));
-  ps.mat = new THREE.ShaderMaterial({uniforms:{map:{value:tex}, uScale:{value:innerHeight*DPR*0.6}}, vertexShader:psVert, fragmentShader:psFrag, transparent:true, depthWrite:false, blending});
+  ps.mat = new THREE.ShaderMaterial({uniforms:{map:{value:tex}, uScale:{value:SH()*DPR*0.6}}, vertexShader:psVert, fragmentShader:psFrag, transparent:true, depthWrite:false, blending});
   ps.points = new THREE.Points(g, ps.mat); ps.points.frustumCulled = false; scene.add(ps.points);
 }
 function emit(ps, x, y, z, n, c, o={}){
@@ -1192,7 +1203,7 @@ function makeDust(tex){
     dust.home.set([x, y, z], i*3); dust.pos.set([x, y, z], i*3);
     col.set([1.0, .82, .6, 0.35 + rnd()*0.35], i*4); size[i] = 0.025 + rnd()*0.035; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(dust.pos, 3)); g.setAttribute('aCol', new THREE.BufferAttribute(col, 4)); g.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
-  dust.mat = new THREE.ShaderMaterial({uniforms:{map:{value:tex}, uScale:{value:innerHeight*DPR*0.6}}, vertexShader:psVert, fragmentShader:psFrag, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+  dust.mat = new THREE.ShaderMaterial({uniforms:{map:{value:tex}, uScale:{value:SH()*DPR*0.6}}, vertexShader:psVert, fragmentShader:psFrag, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
   dust.points = new THREE.Points(g, dust.mat); dust.points.frustumCulled = false; scene.add(dust.points);
 }
 function updateDust(dt){
@@ -1297,7 +1308,7 @@ canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (state !== 
 for (const id of ['title', 'credits', 'death']) $(id).addEventListener('pointerdown', () => advance());
 addEventListener('blur', () => { for (const k in held) held[k] = 0; stickAx = 0; });
 $('go').textContent = TOUCH ? 'Tap to begin' : 'Press Enter to begin';
-$('keys').textContent = TOUCH ? 'Best played with your phone turned sideways' : 'Move A/D · Jump Space · Shadow Step K · Cut J · Gamepad supported';
+$('keys').textContent = TOUCH ? 'Hold your phone upright' : 'Move A/D · Jump Space · Shadow Step K · Cut J · Gamepad supported';
 
 // ---------- tutorial objectives ----------
 function setHintBtn(k){ for (const b of document.querySelectorAll('.btn')) b.classList.toggle('hint', b.dataset.k === k); }
@@ -1326,7 +1337,8 @@ function showSub(){
   s.querySelector('b').textContent = L.sp === 'VO' ? 'ILAN' : L.sp;
   s.querySelector('p').textContent = L.t;
   s.querySelector('small').textContent = TOUCH ? 'Tap to continue' : 'Enter to continue';
-  if (L.cam){ camPosT.set(...L.cam); camLookT.set(...L.look); }
+  if (L.cam){ camLookT.set(...L.look); camPosT.set(...L.cam);
+    if (PORTRAIT()) camPosT.sub(camLookT).multiplyScalar(1.55).add(camLookT); }
 }
 function advance(){
   audio.start();
@@ -1514,6 +1526,16 @@ function updateWalkers(dt){
 // =====================================================================
 // Render-side updates
 // =====================================================================
+// Vertical framing: a wider vertical field of view, the hero placed in the left third and a little above centre,
+// so the shade he can Step into (up to 9.5 m ahead) stays on screen.
+const PORTRAIT = () => SW()/SH() < 0.9;
+const BASE_FOV = () => PORTRAIT() ? 54 : 38;
+function camFrame(lookX, lookY, widthM){
+  const fov = BASE_FOV(), t = Math.tan(THREE.MathUtils.degToRad(fov/2)), a = SW()/SH();
+  const dist = Math.max(PORTRAIT() ? 9 : 14.5, widthM/2/(t*a)), visH = 2*dist*t;
+  const ly = PORTRAIT() ? lookY - visH*0.1 : lookY;
+  return {dist, ly};
+}
 function faceRig(r, face){ r.root.rotation.y = face > 0 ? Math.PI/2 : -Math.PI/2; }
 let uiReady = null, uiCut = null, tmT = 0, camY = 0, camAhead = 1.7;
 const stepBtn = document.querySelector('.btn.step'), cutBtn = document.querySelector('.btn.cut');
@@ -1576,10 +1598,11 @@ function updateVisuals(dt){
   // camera: steady through ordinary jumps, follows when you land higher or fall
   if (state === 'play'){
     if (P.ground || P.y < camY - 0.6 || !P.alive) camY += (P.y - camY)*Math.min(1, dt*4);
-    camAhead += ((P.face*1.7 + P.vx*0.2) - camAhead)*Math.min(1, dt*2.4);
-    const aspect = innerWidth/innerHeight, dist = Math.max(14.5, 7.2/(Math.tan(THREE.MathUtils.degToRad(19))*aspect));
-    camLookT.set(P.x + camAhead, camY + 1.7, 0);
-    camPosT.set(camLookT.x - 0.8, camLookT.y + 1.6 + dist*0.05, dist);
+    const pr = PORTRAIT();
+    camAhead += ((P.face*(pr ? 3.0 : 1.7) + P.vx*(pr ? 0.25 : 0.2)) - camAhead)*Math.min(1, dt*2.4);
+    const f = camFrame(0, camY + 1.7, pr ? 10.8 : 14.4);
+    camLookT.set(P.x + camAhead, f.ly, 0);
+    camPosT.set(camLookT.x - 0.8, camLookT.y + (pr ? 2.4 : 1.6 + f.dist*0.05), f.dist);
   }
   const k = state === 'cut' ? Math.min(1, dt*1.2) : Math.min(1, dt*7);
   camPos.lerp(camPosT, k); camLook.lerp(camLookT, k);
@@ -1587,7 +1610,7 @@ function updateVisuals(dt){
   const sh = shakeT > 0 ? shakeT*0.25 : 0;
   camera.position.set(camPos.x + (Math.random() - .5)*sh, camPos.y + (Math.random() - .5)*sh, camPos.z);
   camera.lookAt(camLook);
-  fovKick = Math.max(0, fovKick - dt*14); const fov = 38 - fovKick; if (Math.abs(camera.fov - fov) > 0.01){ camera.fov = fov; camera.updateProjectionMatrix(); }
+  fovKick = Math.max(0, fovKick - dt*14); const fov = BASE_FOV() - fovKick; if (Math.abs(camera.fov - fov) > 0.01){ camera.fov = fov; camera.updateProjectionMatrix(); }
   sky.position.copy(camera.position);
   // sun and its shadow frustum follow the action
   const fx = state === 'play' || state === 'cut' ? (state === 'cut' && cutLines && cutLines[cutI].cam && cutLines[cutI].cam[1] > 5 ? camLook.x : P.x) : 0;
@@ -1992,7 +2015,7 @@ function jkVisuals(dt){
     const ring = $('jkring');
     if (jk.phase === 'charge' && jk.tta < 1.3 && jk.tta > -0.3){
       const p = new THREE.Vector3(jk.bx - 0.42, 2.0, 0).project(camera);
-      ring.style.left = ((p.x*0.5 + 0.5)*innerWidth) + 'px'; ring.style.top = ((-p.y*0.5 + 0.5)*innerHeight) + 'px';
+      ring.style.left = ((p.x*0.5 + 0.5)*SW()) + 'px'; ring.style.top = ((-p.y*0.5 + 0.5)*SH()) + 'px';
       ring.style.transform = `translate(-50%,-50%) scale(${1 + Math.max(0, jk.tta)*2.4})`; ring.style.opacity = 1;
       ring.classList.toggle('now', Math.abs(jk.tta) < 0.11);
     } else ring.style.opacity = 0;
@@ -2005,13 +2028,13 @@ function jkVisuals(dt){
   }
   updatePS(glowPS, dt); updatePS(smokePS, dt);
   if (state === 'jk'){
-    camLookT.set(focusX, 1.5, 0); camPosT.set(focusX + 0.4, 2.7, 8.6 + (innerWidth < innerHeight ? 6 : 0));
+    const f = camFrame(0, 1.5, PORTRAIT() ? 6.5 : 15); camLookT.set(focusX, f.ly, 0); camPosT.set(focusX + 0.4, f.ly + 1.2, f.dist);
   }
   const k = state === 'cut' ? Math.min(1, dt*1.4) : Math.min(1, dt*5);
   camPos.lerp(camPosT, k); camLook.lerp(camLookT, k);
   shakeT = Math.max(0, shakeT - dt); const sh = shakeT > 0 ? shakeT*0.25 : 0;
   camera.position.set(camPos.x + (Math.random() - .5)*sh, camPos.y + (Math.random() - .5)*sh, camPos.z); camera.lookAt(camLook);
-  if (camera.fov !== 38){ camera.fov = 38; camera.updateProjectionMatrix(); }
+  if (camera.fov !== BASE_FOV()){ camera.fov = BASE_FOV(); camera.updateProjectionMatrix(); }
   sky.position.copy(camera.position);
   sun.target.position.set(camLook.x + 4, 0, -3); sun.position.copy(sun.target.position).addScaledVector(SUN_JK, 70);
   grade.uniforms.time.value = time;
