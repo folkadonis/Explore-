@@ -279,7 +279,7 @@ const TRIGGERS = [
   {x:63,  lines:[['VO','The temple elephants led the procession. Their bells stopped mid-swing.'],['NIZHAL','Big animals. Big shade.']]},
   {x:85,  lines:[['NIZHAL','Every shadow in Kanchi went somewhere. Mine just stayed.']]},
   {x:109, lines:[['NIZHAL','No shade out there.'],['ILAN','Then I\'ll make some.']]},
-  {x:135, still:'REF-02_hall', lines:[['VO','The feast was still laid out. Steam hung over the rice like glass.']]},
+  {x:135, lines:[['VO','The feast was still laid out. Steam hung over the rice like glass.']]},
   {x:146, lines:[['NIZHAL','Ilan. The dark is moving.']], spawn:1},
   {x:168.5,lines:[['VO','They followed me to the doorway. The light took them there.']]}
 ];
@@ -319,7 +319,7 @@ const INTRO = [
   {sp:'VO', t:'Most people remember Prince Aditya\'s coronation as an ordinary day.', cam:[9,1.2,17], look:[-4,34,-26]},
   {sp:'VO', t:'I\'m going to tell you what really happened.', cam:[6,1.6,12], look:[-4,30,-26]},
   {sp:'VO', t:'I opened Mayan\'s door. I lifted the Mirror. Then the minister struck it.', cam:[44,24,32], look:[30,-6,-18]},
-  {sp:'VO', still:'REF-01_terraces', t:'Every shadow in Kanchi tore loose. The people turned to stone. The sun stopped at noon.', cam:[60,6,14], look:[70,1,-2]},
+  {sp:'VO', t:'Every shadow in Kanchi tore loose. The people turned to stone. The sun stopped at noon.', cam:[60,6,14], look:[70,1,-2]},
   {sp:'VO', t:'I woke on the temple steps with a shard in my armband.', cam:[6.2,1.6,6.0], look:[2,0.4,0], wake:0},
   {sp:'NIZHAL', t:'Well. You\'ve really done it this time.', cam:[5.6,1.6,5.4], look:[1.2,0.8,-0.4], wake:1},
   {sp:'ILAN', t:'...Who said that?', cam:[5.4,2.0,5.2], look:[1.8,1.4,0], wake:2},
@@ -1696,12 +1696,12 @@ const BRIDGE = [
   {sp:'VO', t:'Four Pongals before the coronation. Mattu Pongal. I was sixteen.', cam:[171,8,15], look:[178,4,-2]}
 ];
 const JK_INTRO = [
-  {sp:'VO', still:'REF-03_arena', t:'Sevvappur village. Every house had boiled its Pongal at sunrise.', cam:A(-9,3.2,9), look:A(-2,1.2,-1)},
+  {sp:'VO', t:'Sevvappur village. Every house had boiled its Pongal at sunrise.', cam:A(-9,3.2,9), look:A(-2,1.2,-1)},
   {sp:'VO', t:'Kolams at every door. Sugarcane at every gate. The parai never stopped.', cam:A(6,5,16), look:A(20,1.5,-4)},
   {sp:'VEERAN', t:'Your father know you\'re here?', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
   {sp:'ILAN', t:'My father\'s carving a wall in Kanchi.', cam:A(25.6,1.8,3.6), look:A(24,1.5,0)},
   {sp:'VEERAN', t:'Then I\'ll be the one who carries you home.', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
-  {sp:'HEADMAN', still:'REF-04_bull-gate', t:'From the house of Muthan the potter: Vellaiyan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
+  {sp:'HEADMAN', t:'From the house of Muthan the potter: Vellaiyan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
   {sp:'VO', t:'Hold the hump. Not the horns, not the tail. Fifteen strides, and the cloth on his horns is yours.', cam:A(30,2.6,9), look:A(36,1.2,0)}
 ];
 const JK_BETWEEN = [[
@@ -1715,7 +1715,7 @@ const JK_BETWEEN = [[
   {sp:'VO', t:'On the elders\' platform, the prince had stopped leaning over the rail. He was gripping it.', cam:A(17,3.4,1.5), look:A(20,3.0,-6.3)}
 ]];
 const JK_OUTRO = [
-  {sp:'HEADMAN', still:'REF-05_crowd', t:'Sivappan of the palace herd has been held! Honour to the royal house!', cam:A(8,3,10), look:A(14,1.5,-3)},
+  {sp:'HEADMAN', t:'Sivappan of the palace herd has been held! Honour to the royal house!', cam:A(8,3,10), look:A(14,1.5,-3)},
   {sp:'VO', t:'That was the rule. The honour goes to the house that raised the bull.', cam:A(1,1.8,5), look:A(3,1.3,0)},
   {sp:'VO', t:'Nobody asked my name. I told myself I didn\'t mind.', cam:A(-0.6,1.6,4.2), look:A(2.6,1.3,0)},
   {sp:'ADITYA', t:'You held him.', cam:A(5.6,1.6,3.6), look:A(3.6,1.4,0)},
