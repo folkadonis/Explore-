@@ -136,6 +136,18 @@ body.arena #toast{display:none}
 #jkhud.show{display:flex}
 #jkhud .nm{font-family:var(--display);font-size:13px;letter-spacing:.08em;color:var(--gold);white-space:nowrap}
 #jkhud .row{display:flex;gap:12px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+#jkhud .hearts{display:flex;gap:8px;font-size:22px;line-height:1;letter-spacing:0}
+#jkhud .hearts i{font-style:normal;color:var(--gold);text-shadow:0 0 8px rgba(233,182,92,.7);transition:opacity .3s,transform .3s}
+#jkhud .hearts i.lost{opacity:.18;transform:scale(.7)}
+#jkhud .tapcue{font-size:12px;letter-spacing:.18em;opacity:.7}
+#jkres .coin{display:none;width:72px;margin:0 auto 6px}
+#jkres .coin.on{display:block}
+body.arena #stickZone,body.arena .btn.step,body.arena .btn.cut{display:none}
+body.arena .btn.jump{width:112px;height:112px}
+#beatring{position:fixed;left:80%;top:46%;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:4px solid var(--gold);opacity:0;pointer-events:none;box-shadow:0 0 18px rgba(233,182,92,.6)}
+#beattarget{position:fixed;left:80%;top:46%;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:2px dashed rgba(255,255,255,.55);opacity:0;pointer-events:none;display:grid;place-items:center;font:700 15px var(--body);letter-spacing:.12em;color:#fff;text-shadow:0 1px 6px #000}
+#beattarget.on{opacity:1}
+#beatring.hit{border-color:#fff}
 #jkhud .bal{position:relative;width:240px;height:12px;border-radius:6px;background:linear-gradient(90deg,#a3201d 0,#3a2b44 20%,#3a2b44 80%,#a3201d 100%);transition:opacity .3s}
 #jkhud .bal::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,.55)}
 #jkhud .needle{position:absolute;top:-4px;width:6px;height:20px;margin-left:-3px;border-radius:3px;background:#fff;box-shadow:0 0 8px #fff}
@@ -147,7 +159,7 @@ body.arena #toast{display:none}
 #beatdot.on{background:var(--gold);box-shadow:0 0 10px var(--gold)}
 #jkring{position:fixed;left:0;top:0;width:70px;height:70px;border-radius:50%;border:3px solid var(--gold);opacity:0;pointer-events:none;box-shadow:0 0 12px rgba(233,182,92,.7)}
 #jkring.now{border-color:#fff;box-shadow:0 0 24px #fff}
-#jkflash{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%) scale(.9);font-family:var(--display);font-size:clamp(22px,8cqw,34px);letter-spacing:.06em;opacity:0;
+#jkflash{position:fixed;left:50%;top:54%;transform:translate(-50%,-50%) scale(.9);font-family:var(--display);font-size:clamp(22px,8cqw,34px);letter-spacing:.06em;opacity:0;
   transition:opacity .15s,transform .2s;pointer-events:none;text-shadow:0 2px 12px #000;white-space:nowrap}
 #jkflash.show{opacity:1;transform:translate(-50%,-50%) scale(1)} #jkflash.good{color:var(--gold)} #jkflash.bad{color:#ff8a7a}
 #jkres{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);background:rgba(14,9,22,.86);border:1px solid rgba(233,182,92,.5);border-radius:14px;
@@ -185,8 +197,8 @@ body.arena #toast{display:none}
 </div>
 <div class="layer" id="loading">CARVING KANCHI…</div>
 <div id="err"></div>
-<div id="jkhud"><div class="nm"></div><div class="row"><span class="dist"></span><i id="beatdot"></i><span class="sc"></span></div><div class="bal"><i class="needle"></i></div><div class="grip"><i></i></div></div>
-<div id="jkring"></div><div id="jkflash"></div><div id="jkres"><h3></h3><p></p><small></small></div><div id="flash"></div>
+<div id="jkhud"><div class="nm"></div><div class="row"><span class="dist"></span><i id="beatdot"></i><span class="sc"></span></div><div class="hearts"></div><div class="tapcue">TAP ANYWHERE</div></div>
+<div id="jkring"></div><div id="beatring"></div><div id="beattarget">TAP</div><div id="jkflash"></div><div id="jkres"><img class="coin" alt=""><h3></h3><p></p><small></small></div><div id="flash"></div>
 <div id="controls">
   <div id="stickZone" class="idle"><div id="stickBase"><div id="stickKnob"></div></div><span id="stickHint">DRAG TO RUN</span></div>
   <div id="rpad">
@@ -218,7 +230,7 @@ window.addEventListener('error', e => { const el = $('err'); el.style.display = 
 // =====================================================================
 // Tuning. World units are metres. x runs along the lane, y is up, z points at the camera.
 // =====================================================================
-const RUN = 6.2, G = 26, JV = 9.0, STEP_R = 9.5, PH = 1.75, PHW = 0.25;
+const RUN = 6.2, G = 26, JV = 9.0, STEP_R = 10.5, PH = 1.75, PHW = 0.25;
 // Direction sunlight travels. Shadows lean +x and toward the camera (+z), so shade-casters sit behind the lane.
 const SUN_D = new THREE.Vector3(0.32, -1, 0.35).normalize();
 const TO_SUN = SUN_D.clone().negate();
@@ -1254,8 +1266,8 @@ function resetPlayer(cp){
   P = {x:cp.sx, y:cp.sy, vx:0, vy:0, face:1, ground:1, coy:0, jbuf:0, sbuf:0, sArmed:0, jumping:0, stepCd:0, atk:0, atkCd:0, phase:0, alive:1, fell:0,
        nzx:cp.sx - 0.8, nzy:cp.sy, stepFx:0, squash:0, safe:{x:cp.sx, y:cp.sy}};
 }
-function makeWalkers(){ return [150, 156, 161].map(x => ({x, y:0, hp:2, alive:1, active:0, wake:9, spd:2.0, kv:0, burn:0, ph:Math.random()*6})); }
-function spawnChasers(){ for (const x of [141.6, 142.3, 143.0]) walkers.push({x, y:0, hp:2, alive:1, active:1, wake:999, spd:3.7, kv:0, burn:0, ph:Math.random()*6}); }
+function makeWalkers(){ return [150, 156, 161].map(x => ({x, y:0, hp:1, alive:1, active:0, wake:9, spd:2.0, kv:0, burn:0, ph:Math.random()*6})); }
+function spawnChasers(){ for (const x of [141.6, 142.3, 143.0]) walkers.push({x, y:0, hp:1, alive:1, active:1, wake:999, spd:3.0, kv:0, burn:0, ph:Math.random()*6}); }
 function newGame(){
   for (const t of TRIGGERS) t.done = 0;
   for (const c of CANOPIES){ c.cut = 0; c.t = 0; }
@@ -1303,6 +1315,7 @@ function moveStick(e){
 }
 zone.addEventListener('pointerdown', e => {
   e.preventDefault(); audio.start();
+  if (inArena && state === 'jk'){ pressed.jump = 1; buzz(8); return; }
   if (state !== 'play' && state !== 'jk'){ advance(); return; }
   if (stickId !== null) return;
   stickId = e.pointerId; try { zone.setPointerCapture(e.pointerId); } catch(err){}
@@ -1327,7 +1340,7 @@ function pollPad(){
   if (now.start && !padPrev.start) advance();
   padPrev = now;
 }
-canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (state !== 'play' && state !== 'jk') advance(); });
+canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (inArena && state === 'jk'){ pressed.jump = 1; buzz(8); return; } if (state !== 'play' && state !== 'jk') advance(); });
 for (const id of ['title', 'credits', 'death']) $(id).addEventListener('pointerdown', () => advance());
 addEventListener('blur', () => { for (const k in held) held[k] = 0; stickAx = 0; });
 $('go').textContent = TOUCH ? 'Tap to begin' : 'Press Enter to begin';
@@ -1347,6 +1360,11 @@ function updateObjectives(dt){
   const o = OBJ[objI];
   if (!objOn){ if (o.at === undefined || P.x >= o.at){ objOn = true; objT = 0; showObj(o); } else return; }
   objT += dt;
+  if (!o.info && !o.nudged && objT > 12){ o.nudged = 1; const k = o.btn;
+    say('HINT', k === 'step' ? 'Stuck? Walk to the edge, wait for the violet ghost to appear in the shade ahead, then tap Step.'
+      : k === 'cut' ? 'Stuck? Stand right beside the wooden post (it glows gold) and tap Cut.'
+      : k === 'jump' ? 'Stuck? Run at the edge and tap Jump just before you reach it. Hold Jump to go higher.'
+      : 'Stuck? Keep moving right.'); }
   if (objI === 0) sHint.style.opacity = 1;
   const next = OBJ.slice(objI + 1).find(n => n.at !== undefined);
   const skipped = next && P.x >= next.at + 2;   // the player got past it another way
@@ -1419,13 +1437,13 @@ function moveX(dx){
   }
 }
 function moveY(dy){ P.y += dy; P.ground = 0; for (const s of SOLIDS) if (hits(s)){ if (dy < 0){ P.y = s.y1; P.ground = 1; } else P.y = s.y0 - PH; P.vy = 0; } }
-function findTarget(){
+function findTarget(dir = P.face){
   let best = null, bd = -1;
   for (const s of shadows){
     if (s.x2 - s.x1 < 0.6) continue;
     const dy = s.y - P.y; if (Math.abs(dy) > 5) continue;
     const mx = Math.sqrt(STEP_R*STEP_R - dy*dy); let tx;
-    if (P.face > 0){ const lo = Math.max(s.x1 + 0.3, P.x + 1.0), hi = Math.min(s.x2 - 0.3, P.x + mx); if (lo > hi) continue; tx = hi; }
+    if (dir > 0){ const lo = Math.max(s.x1 + 0.3, P.x + 1.0), hi = Math.min(s.x2 - 0.3, P.x + mx); if (lo > hi) continue; tx = hi; }
     else { const lo = Math.max(s.x1 + 0.3, P.x - mx), hi = Math.min(s.x2 - 0.3, P.x - 1.0); if (lo > hi) continue; tx = lo; }
     if (SOLIDS.some(b => tx + PHW > b.x0 && tx - PHW < b.x1 && s.y + PH > b.y0 + 1e-3 && s.y + 1e-3 < b.y1)) continue;
     const d = Math.abs(tx - P.x); if (d > bd){ bd = d; best = {x:tx, y:s.y}; }
@@ -1502,8 +1520,8 @@ function updatePlayer(dt){
   if (Math.abs(ax) > 0.05) P.face = Math.sign(ax);
   // quick to start, quick to stop, a little less grip in the air
   P.vx += (ax*RUN - P.vx)*Math.min(1, dt*(P.ground ? 18 : 10));
-  P.coy = P.ground ? 0.12 : P.coy - dt;
-  P.jbuf = pressed.jump ? 0.15 : P.jbuf - dt;
+  P.coy = P.ground ? 0.16 : P.coy - dt;
+  P.jbuf = pressed.jump ? 0.2 : P.jbuf - dt;
   if (P.jbuf > 0 && P.coy > 0){ P.vy = JV; P.coy = 0; P.jbuf = 0; P.ground = 0; P.jumping = 1; audio.sfx('jump');
     emit(smokePS, P.x, P.y + 0.05, 0, 4, [0.7, 0.58, 0.48, 0.3], {spd:0.8, life:0.6, size:0.4, grow:2, spreadY:0.05}); }
   if (P.jumping && !held.jump && P.vy > 3.2){ P.vy = 3.2; P.jumping = 0; }   // short tap = short hop
@@ -1520,6 +1538,7 @@ function updatePlayer(dt){
   P.stepCd -= dt; P.stepFx = Math.max(0, P.stepFx - dt);
   // Step is buffered: press a moment early (say, while the banner swings in) and it fires as soon as shade is in reach.
   if (pressed.step){ P.sbuf = 0.25; P.sArmed = 1; } else P.sbuf -= dt;
+  if (P.sbuf > 0 && P.stepCd <= 0 && !target && pressed.step){ const back = findTarget(-P.face); if (back){ P.face = -P.face; target = back; } }
   if (P.sbuf > 0 && P.stepCd <= 0 && target){ doStep(); P.sbuf = 0; P.sArmed = 0; }
   else if (P.sbuf <= 0 && P.sArmed){ P.sArmed = 0; audio.sfx('fizzle');
     emit(glowPS, P.x + P.face*0.3, P.y + 1.1, 0, 10, [0.5, 0.35, 1.1, 0.8], {spd:0.8, life:0.4, size:0.12});
@@ -1527,14 +1546,14 @@ function updatePlayer(dt){
   P.atkCd -= dt; P.atk = Math.max(0, P.atk - dt);
   if (pressed.cut && P.atkCd <= 0){
     // auto-face the nearest shadow so a Cut never whiffs because you were turned the wrong way
-    let near = null; for (const w of walkers) if (w.alive && !w.burn && Math.abs(w.x - P.x) < 2.2 && (!near || Math.abs(w.x - P.x) < Math.abs(near.x - P.x))) near = w;
+    let near = null; for (const w of walkers) if (w.alive && !w.burn && Math.abs(w.x - P.x) < 2.6 && (!near || Math.abs(w.x - P.x) < Math.abs(near.x - P.x))) near = w;
     if (near) P.face = Math.sign(near.x - P.x) || P.face;
     P.atk = 0.22; P.atkCd = 0.28; audio.sfx('cut');
     for (const c of CANOPIES) if (!c.cut && Math.abs(P.x - c.post) < 2.2){ c.cut = 1; c.t = 0; audio.sfx('cloth'); buzz(15);
       emit(glowPS, c.post, 2.2, -0.6, 14, [1.6, 1.1, 0.4, 1], {spd:1.6, life:0.5, size:0.12});
       say('VO', c === CANOPIES[0] ? 'That silk was meant to shade the prince.' : 'He wouldn\'t miss it.'); }
     for (const w of walkers) if (w.alive && !w.burn){ const d = (w.x - P.x)*P.face;
-      if (d > -0.3 && d < 2.0 && Math.abs(P.y - w.y) < 1.5){ w.hp--; w.kv = P.face*12; w.active = 1; hitStop = 0.05; buzz(18);
+      if (d > -0.4 && d < 2.5 && Math.abs(P.y - w.y) < 1.6){ w.hp--; w.kv = P.face*12; w.active = 1; hitStop = 0.05; buzz(18);
         emit(smokePS, w.x, w.y + 1.1, 0, 14, [0.04, 0.02, 0.08, 0.8], {spd:2, life:0.6, size:0.5}); if (w.hp <= 0) w.burn = 0.35; } }
   }
   P.nzx += (P.x - 0.8*P.face - P.nzx)*Math.min(1, dt*5.5); P.nzy += (P.y - P.nzy)*Math.min(1, dt*8);
@@ -1657,9 +1676,9 @@ function updateVisuals(dt){
 // =====================================================================
 const AX = 1000, ILAN_X = AX + 24;
 const BULLS = [
-  {name:'Vellaiyan', house:'the house of Muthan the potter', col:0xd8d0c2, horn:0xb3262b, speed:7.0, rideV:1.7, dist:15, period:0.86, force:1.2, switchP:0, pause:0},
-  {name:'Karuppan', house:'the Pulikulam herders', col:0x2a2422, horn:0x2a5fb0, speed:8.6, rideV:1.9, dist:15, period:0.72, force:1.55, switchP:0.35, pause:0},
-  {name:'Sivappan', house:'the palace herd', col:0x7c3a22, horn:0xd9a441, speed:9.4, rideV:2.0, dist:20, period:0.64, force:1.8, switchP:0.3, pause:1}
+  {name:'Vellaiyan', house:'the house of Muthan the potter', col:0xd8d0c2, horn:0xb3262b, speed:7.0, rideV:1.7, dist:15, period:0.95, win:0.26, force:1.2, switchP:0, pause:0},
+  {name:'Karuppan', house:'the Pulikulam herders', col:0x2a2422, horn:0x2a5fb0, speed:8.0, rideV:1.9, dist:15, period:0.8, win:0.22, force:1.55, switchP:0.35, pause:0},
+  {name:'Sivappan', house:'the palace herd', col:0x7c3a22, horn:0xd9a441, speed:8.6, rideV:2.0, dist:20, period:0.72, win:0.2, force:1.8, switchP:0.3, pause:1}
 ];
 const A = (x, y, z) => [AX + x, y, z];
 const BRIDGE = [
@@ -1796,7 +1815,7 @@ function buildArena(){
   const plats = [place(box(46, 0.5, 1.8), AX + 23, 0.25, -4.0), place(box(46, 1.1, 1.8), AX + 23, 0.55, -5.9)];
   plats.push(place(box(5, 2.0, 3), AX + 20, 1.0, -6.6));
   const plm = new THREE.Mesh(merge(plats), wood); plm.castShadow = plm.receiveShadow = true; scene.add(plm);
-  const can = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 3.2), MAT.canopy); can.rotation.x = -Math.PI/2; can.position.set(AX + 20, 4.6, -6.6); can.castShadow = true; scene.add(can);
+  const can = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 3.2), MAT.canopy); can.rotation.x = -Math.PI/2; can.position.set(AX + 20, 4.6, -6.6); ARENA.canopy = can; can.castShadow = true; scene.add(can);
   for (const [x, z] of [[17.4, -5.2], [22.6, -5.2], [17.4, -8], [22.6, -8]]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), wood); p.position.set(AX + x, 3.3, z); scene.add(p); }
   // the vaadivaasal: a narrow timber gate with a thatched roof, mango leaves and banana plants
   const gate = [place(box(0.5, 3.4, 0.5), AX + 42.5, 1.7, -1.3), place(box(0.5, 3.4, 0.5), AX + 42.5, 1.7, 1.3), place(box(0.7, 0.5, 3.4), AX + 42.5, 3.55, 0)];
@@ -1875,7 +1894,7 @@ function buildArena(){
 
 function setBtnMode(mode){
   const j = document.querySelector('.btn.jump'), c = document.querySelector('.btn.cut'), s = document.querySelector('.btn.step');
-  if (mode === 'jk'){ j.innerHTML = '<span>●</span>GRIP'; c.innerHTML = '<span>✦</span>SNATCH'; s.style.visibility = 'hidden'; }
+  if (mode === 'jk'){ j.innerHTML = '<span>●</span>TAP'; s.style.visibility = 'hidden'; }
   else { j.innerHTML = '<span>▲</span>JUMP'; c.innerHTML = '<span>✕</span>CUT'; s.style.visibility = ''; }
 }
 function enterArena(){
@@ -1895,23 +1914,27 @@ function exitArena(){
   if (!inArena) return; inArena = false; jk = null;
   sun.color.setHex(SAVED.sunCol); sun.intensity = SAVED.sunI; hemi.color.setHex(SAVED.hemiC); hemi.groundColor.setHex(SAVED.hemiG); scene.fog.color.setHex(SAVED.fogC); scene.fog.density = SAVED.fogD; hemi.intensity = SAVED.hemiI;
   skyMat.uniforms.sunDir.value.copy(TO_SUN); skyMat.uniforms.mem.value = 0; setSky('skyNoon', 0.5, 1.15, 0.5, TO_SUN, 2.4); grade.uniforms.mem.value = 0;
-  document.body.classList.remove('arena'); setBtnMode('play'); ilan.root.scale.setScalar(1); ilan.tilt.rotation.set(0, 0, 0); $('jkhud').className = ''; $('jkring').style.opacity = 0;
+  document.body.classList.remove('arena'); setBtnMode('play'); ilan.root.scale.setScalar(1); ilan.tilt.rotation.set(0, 0, 0); $('jkhud').className = ''; $('jkring').style.opacity = 0; $('beatring').style.opacity = 0; $('beattarget').classList.remove('on');
   for (const b of bullRigs){ b.root.visible = false; if (b.bb) b.bb.mesh.visible = false; }
 }
 const JK_HINTS = {
-  wait:{tk:'GRIP', kk:'Space', btn:'jump', text:'Bull out of the gate! Tap Grip as the gold ring closes on his hump.'},
-  ride:{tk:'◀ ▶', kk:'A D', text:'Lean against the buck. Keep the needle in the centre.'},
-  beat:{tk:'GRIP', kk:'Space', btn:'jump', text:'Tap Grip each time his front hooves hit the ground. Miss the beat and your grip slips.'},
-  snatch:{tk:'SNATCH', kk:'J', btn:'cut', text:'He drops his head to throw you. Tap Snatch as it dips to take the cloth.'}
+  wait:{tk:'TAP', kk:'Space', btn:'jump', text:'Here he comes. Tap when the gold ring closes on his hump.'},
+  ride:{tk:'TAP', kk:'Space', btn:'jump', text:'Hold on! Tap each time the ring closes, as his hooves hit the ground.'},
+  snatch:{tk:'TAP', kk:'Space', btn:'jump', text:'He drops his head. Tap now to take the coin cloth!'}
 };
-function jkHint(key){ if (jk.i === 0 || key === 'snatch' || key === 'wait'){ showObj(JK_HINTS[key]); } }
+function jkHint(key){ if (jk.i === 0 || key !== 'ride'){ showObj(JK_HINTS[key]); } }
+// timing windows (seconds either side of the moment) widen after each failed attempt
+const jkWin = () => { const B = BULLS[jk.i]; return (B.win || 0.22)*(1 + 0.3*Math.min(2, jk.attempts - 1)); };
+function drawHearts(){ const h = $('jkhud').querySelector('.hearts'); h.innerHTML = Array.from({length:jk.maxH}, (_, i) => `<i class="${i < jk.hearts ? '' : 'lost'}">◆</i>`).join(''); }
 function startBull(i){
   const B = BULLS[i], keep = jk && jk.i === i ? jk : null;
-  jk = {i, phase:'wait', t:0, wait:(i === 2 ? 2.2 : 1.4) + Math.random()*1.2, bx:AX + 45.5, ph:0, b:0, g:1, dist:0, buckT:0, per:B.period, dir:1, beatN:-1, hit:new Set(), checked:-1,
+  jk = {i, phase:'wait', t:0, hearts:3, maxH:3, combo:0, bestCombo:0, lock:0, wait:(i === 2 ? 2.2 : 1.4) + Math.random()*1.2, bx:AX + 45.5, ph:0, b:0, g:1, dist:0, buckT:0, per:B.period, dir:1, beatN:-1, hit:new Set(), checked:-1,
         tta:9, paused:0, firm:0, slips:0, grabQ:'', attempts:keep ? keep.attempts + 1 : 1, best:keep ? keep.best : 0, ix:ILAN_X, iy:0, ivx:0, ivy:0, ivz:0, iz:0, cloth:false, dip:0, snatchTry:false, msgT:0};
   bullRigs.forEach((b, k) => { b.root.visible = k === i; b.cloth.visible = true; b.head.rotation.z = 0; });
   $('jkhud').className = 'show'; $('jkhud').querySelector('.nm').textContent = `${B.name} · ${B.house}`;
-  jkHint('wait');
+  drawHearts(); jkHint('wait');
+  if (jk.attempts === 2) say('VEERAN', 'Watch his front hooves, not his horns.');
+  if (jk.attempts === 3) say('VEERAN', 'Breathe. Feel the rhythm. Now.');
 }
 function jkFlash(text, good){ const f = $('jkflash'); f.textContent = text; f.className = good ? 'show good' : 'show bad'; clearTimeout(jkFlash.t); jkFlash.t = setTimeout(() => f.className = '', 650); }
 function jkThrow(msg){
@@ -1921,21 +1944,25 @@ function jkThrow(msg){
 }
 function jkFinish(success){
   const B = BULLS[jk.i];
-  let pts = Math.round(jk.dist*25) + jk.firm*40;
-  if (success){ pts += jk.grabQ === 'Perfect' ? 500 : 250; if (jk.cloth) pts += 600; if (jk.slips === 0) pts += 300; }
+  let pts = Math.round(Math.min(jk.dist, B.dist)*20) + jk.firm*50 + jk.bestCombo*40;
+  if (success){ pts += jk.grabQ === 'Perfect' ? 500 : 250; if (jk.cloth) pts += 600; if (jk.hearts === jk.maxH) pts += 300; }
   jk.best = Math.max(jk.best, pts);
   const lines = success
-    ? [`${B.name} held!`, `${jk.grabQ} grab · ${Math.min(jk.dist, B.dist).toFixed(0)} m · ${jk.firm} firm beats${jk.cloth ? ' · cloth taken' : ''}${jk.slips === 0 ? ' · never slipped' : ''}`, `${pts.toLocaleString()} points`]
-    : [jk.msg || 'Thrown!', `Held ${jk.dist.toFixed(1)} of ${B.dist} m.`, jk.attempts >= 3 ? 'The memory moves on. You held him, in the end.' : 'Veeran hauls you back over the barricade. Again.'];
+    ? [`${B.name} held!`, `${jk.grabQ} grab · best streak ×${jk.bestCombo}${jk.cloth ? ' · cloth taken' : ''}${jk.hearts === jk.maxH ? ' · never slipped' : ''}`, `${pts.toLocaleString()} points`]
+    : [jk.msg || 'Thrown!', `Held ${jk.dist.toFixed(1)} of ${B.dist} m.`, jk.attempts >= 3 ? 'The memory moves on. You held him, in the end.' : 'Veeran hauls you back over the barricade. Again, and the timing gets easier.'];
   const r = $('jkres'); r.querySelector('h3').textContent = lines[0]; r.querySelector('p').textContent = lines[1]; r.querySelector('small').textContent = lines[2]; r.className = 'show ' + (success ? 'good' : 'bad');
+  r.querySelector('.coin').classList.toggle('on', !!(success && jk.cloth));
   jk.phase = 'result'; jk.t = 0; jk.success = success || jk.attempts >= 3;
   if (jk.success){ jkScore += jk.best; for (const c of crowd) c.jump = 1; audio.sfx(success ? 'collect' : 'chime'); }
   $('obj').className = ''; setHintBtn(null);
 }
 function updateJK(dt){
   if (!jk) return;
-  const B = BULLS[jk.i], R = bullRigs[jk.i]; jk.t += dt;
-  const ax = ((held.r ? 1 : 0) - (held.l ? 1 : 0)) || stickAx || padAx;
+  const B = BULLS[jk.i], R = bullRigs[jk.i];
+  const tap = !!(pressed.jump || pressed.cut || pressed.step);
+  jk.lock = Math.max(0, jk.lock - dt);
+  if (jk.phase === 'charge' && jk.tta < 0.7 && jk.tta > -0.4) dt *= 0.45;   // slow motion as he reaches you
+  jk.t += dt;
   if (jk.phase === 'wait'){
     if (jk.t > jk.wait){ jk.phase = 'charge'; jk.t = 0; audio.sfx('roar'); shakeT = 0.25; for (const c of crowd) c.jump = 0.6; }
   } else if (jk.phase === 'charge' || jk.phase === 'miss'){
@@ -1945,45 +1972,47 @@ function updateJK(dt){
     const humpX = jk.bx - 0.42;
     jk.tta = jk.paused > 0 ? 9 : (humpX - ILAN_X)/B.speed;
     if (jk.phase === 'charge'){
-      if (pressed.jump){
-        if (jk.tta > 0.26) jkThrow('Too early! He hooked you aside.');
-        else if (jk.tta >= -0.26){
-          jk.grabQ = Math.abs(jk.tta) < 0.11 ? 'Perfect' : 'Good'; jkFlash(jk.grabQ + ' grab!', true);
+      const W = jkWin()*1.6;
+      if (tap && jk.lock <= 0){
+        if (jk.tta > W){ jkFlash('Wait for it…', false); jk.lock = 0.25; }
+        else if (jk.tta >= -W){
+          jk.grabQ = Math.abs(jk.tta) < W*0.4 ? 'Perfect' : 'Good'; jkFlash(jk.grabQ + ' grab!', true);
           jk.phase = 'ride'; jk.t = 0; jk.buckT = 0; jk.per = B.period; jk.beatN = -1; audio.sfx('step'); hitStop = 0.08; buzz(25); for (const c of crowd) c.jump = 1;
-          jkHint('ride'); setTimeout(() => { if (jk && jk.phase === 'ride') jkHint('beat'); }, 2600);
+          jkHint('ride');
         }
       }
-      if (jk.tta < -0.3){ jk.phase = 'miss'; jk.t = 0; jkFlash('Too late. He\'s past you.', false); }
+      if (jk.tta < -W - 0.05){ jk.phase = 'miss'; jk.t = 0; jkFlash('Too late. He\'s past you.', false); }
     } else if (jk.t > 1.4){ jk.msg = 'Missed him at the gate.'; jkFinish(false); }
   } else if (jk.phase === 'ride'){
     jk.bx -= B.rideV*dt; jk.dist += B.rideV*dt; R.ph += dt*5;
     jk.buckT += dt; jk.since = (jk.since ?? 9) + dt;
-    if (jk.buckT >= jk.per){ jk.buckT -= jk.per; jk.beatN++; jk.since = 0; jk.per = B.period*(0.85 + Math.random()*0.3); jk.dir = Math.random() < 0.5 ? -1 : 1; audio.sfx('hoof'); shakeT = Math.max(shakeT, 0.06); }
-    const toNext = jk.per - jk.buckT, W = 0.17;
+    if (jk.buckT >= jk.per){ jk.buckT -= jk.per; jk.beatN++; jk.since = 0; jk.per = B.period*(0.9 + Math.random()*0.2); jk.dir = Math.random() < 0.5 ? -1 : 1; audio.sfx('hoof'); shakeT = Math.max(shakeT, 0.06); }
+    const toNext = jk.per - jk.buckT, W = jkWin();
     const win = toNext < W ? jk.beatN + 1 : (jk.since < W && jk.beatN >= 0 ? jk.beatN : -1);
     jk.inWin = win >= 0;
-    if (pressed.jump){
-      if (win >= 0 && !jk.hit.has(win)){ jk.hit.add(win); jk.g = Math.min(1, jk.g + 0.25); jk.firm++; jkFlash('Firm!', true); audio.sfx('firm'); buzz(10); }
-      else { jk.g -= 0.05; jkFlash('Off the beat', false); }
+    if (tap && jk.lock <= 0){
+      if (win >= 0 && !jk.hit.has(win)){
+        const off = win === jk.beatN ? jk.since : toNext;
+        jk.hit.add(win); jk.firm++; jk.combo++; jk.bestCombo = Math.max(jk.bestCombo, jk.combo);
+        jkFlash(off < W*0.4 ? `Perfect! ×${jk.combo}` : `Firm! ×${jk.combo}`, true); audio.sfx('firm'); buzz(10);
+        $('beatring').classList.add('hit'); setTimeout(() => $('beatring').classList.remove('hit'), 120);
+        if (jk.combo % 5 === 0){ for (const c of crowd) c.jump = 1; if (jk.hearts < jk.maxH){ jk.hearts++; drawHearts(); setTimeout(() => jkFlash('Grip restored!', true), 300); } }
+      } else jk.lock = 0.2;   // a tap between beats does nothing (and spamming can't win)
     }
-    if (jk.beatN >= 0 && jk.since >= W && jk.checked !== jk.beatN){ jk.checked = jk.beatN; if (!jk.hit.has(jk.beatN)){ jk.g -= 0.14; jk.slips++; jkFlash('Slipping!', false); } }
-    // the buck throws you one way; lean the other way
-    const u = jk.buckT/jk.per;
-    if (B.switchP && u > 0.3 && u < 0.32 && Math.random() < B.switchP) jk.dir *= -1;
-    const f = u < 0.6 ? jk.dir*B.force*Math.sin(u/0.6*Math.PI) : 0;
-    jk.b += (f + ax*2.5)*dt; jk.b *= Math.pow(0.4, dt);   // the needle shows where you're sliding; push the other way
-    jk.g -= 0.05*dt;
-    if (Math.abs(jk.b) > 1) jkThrow('Thrown! He bucked you off.');
-    else if (jk.g <= 0) jkThrow('Your grip gave out.');
-    else if (jk.dist >= B.dist){ jk.phase = 'snatch'; jk.t = 0; jk.dipAt = 0.6 + Math.random()*0.5; jkHint('snatch'); }
+    if (jk.beatN >= 0 && jk.since >= W && jk.checked !== jk.beatN){ jk.checked = jk.beatN;
+      if (!jk.hit.has(jk.beatN)){ jk.hearts--; jk.slips++; jk.combo = 0; drawHearts(); jkFlash('Slipping!', false); buzz(30); shakeT = 0.15; } }
+    jk.b = jk.dir*Math.sin(Math.min(1, (jk.buckT/jk.per)/0.6)*Math.PI)*0.35*(jk.hearts < 2 ? 1.6 : 1);   // he leans further as his grip fails
+    if (jk.hearts <= 0) jkThrow('Thrown! He bucked you off.');
+    else if (jk.dist >= B.dist){ jk.phase = 'snatch'; jk.t = 0; jk.dipAt = 0.9; jkHint('snatch'); }
   } else if (jk.phase === 'snatch'){
     jk.bx -= B.rideV*0.4*dt; R.ph += dt*2;
-    jk.dip = Math.exp(-Math.pow((jk.t - jk.dipAt)/0.2, 2));
+    jk.dip = Math.exp(-Math.pow((jk.t - jk.dipAt)/0.45, 2));
     jk.b *= Math.pow(0.3, dt);
-    if (pressed.cut && !jk.snatchTry){ jk.snatchTry = true;
-      if (Math.abs(jk.t - jk.dipAt) < 0.24){ jk.cloth = true; R.cloth.visible = false; jkFlash('Cloth taken!', true); audio.sfx('collect'); hitStop = 0.08; buzz(30); }
+    if (jk.t > jk.dipAt - 0.5 && jk.t < jk.dipAt + 0.55) $('beattarget').classList.add('on');
+    if (tap && !jk.snatchTry && jk.t > 0.25){ jk.snatchTry = true;
+      if (Math.abs(jk.t - jk.dipAt) < 0.55){ jk.cloth = true; R.cloth.visible = false; jkFlash('Cloth taken!', true); audio.sfx('collect'); hitStop = 0.08; buzz(30); }
       else jkFlash('Missed the cloth', false); }
-    if (jk.t > jk.dipAt + 0.9){ jkFinish(true); }
+    if (jk.t > jk.dipAt + 0.9){ $('beattarget').classList.remove('on'); jkFinish(true); }
   } else if (jk.phase === 'thrown'){
     jk.ivy -= G*dt; jk.ix += jk.ivx*dt; jk.iy += jk.ivy*dt; jk.iz += jk.ivz*dt; jk.bx -= B.rideV*dt; R.ph += dt*5;
     if (jk.iy <= 0){ if (!jk.landed){ jk.landed = 1; emit(smokePS, jk.ix, 0.2, jk.iz, 18, [0.85, 0.7, 0.55, 0.6], {spd:1.6, life:1.2, size:0.8, grow:2.5, up:0.4}); audio.sfx('land'); }
@@ -2044,20 +2073,20 @@ function jkVisuals(dt){
     }
     // HUD: balance needle, grip, distance, timing ring
     const hud = $('jkhud');
-    hud.querySelector('.needle').style.left = (50 + Math.max(-1, Math.min(1, jk.b))*48) + '%';
-    hud.querySelector('.bal').classList.toggle('warn', Math.abs(jk.b) > 0.65);
-    hud.querySelector('.grip i').style.width = Math.max(0, jk.g*100) + '%';
     hud.querySelector('.dist').textContent = `${Math.min(jk.dist, B.dist).toFixed(1)} / ${B.dist} m`;
     hud.querySelector('.sc').textContent = `${jkScore.toLocaleString()} pts`;
     hud.classList.toggle('riding', jk.phase === 'ride' || jk.phase === 'snatch');
     document.querySelector('.btn.jump').classList.toggle('beat', jk.phase === 'ride' && !!jk.inWin);
     $('beatdot').classList.toggle('on', jk.phase === 'ride' && !!jk.inWin);
+    const br = $('beatring'), bt = $('beattarget');
+    if (jk.phase === 'ride'){ const k = (jk.per - jk.buckT)/jk.per; br.style.opacity = 1; br.style.transform = `scale(${1 + k*1.7})`; bt.classList.add('on'); }
+    else { br.style.opacity = 0; if (jk.phase !== 'snatch') bt.classList.remove('on'); }
     const ring = $('jkring');
     if (jk.phase === 'charge' && jk.tta < 1.3 && jk.tta > -0.3){
       const p = new THREE.Vector3(jk.bx - 0.42, R.bb ? R.bb.humpY + 0.15 : 2.0, 0).project(camera);
       ring.style.left = ((p.x*0.5 + 0.5)*SW()) + 'px'; ring.style.top = ((-p.y*0.5 + 0.5)*SH()) + 'px';
       ring.style.transform = `translate(-50%,-50%) scale(${1 + Math.max(0, jk.tta)*2.4})`; ring.style.opacity = 1;
-      ring.classList.toggle('now', Math.abs(jk.tta) < 0.11);
+      ring.classList.toggle('now', Math.abs(jk.tta) < jkWin()*0.6);
     } else ring.style.opacity = 0;
   } else {
     for (const o of bullRigs) if (o.bb) o.bb.mesh.visible = false;
@@ -2105,7 +2134,7 @@ const ART_FILES = {
   riceThrower:'billboards/CRW-11_rice-thrower_side.webp', flowerGirl:'billboards/CRW-12_flower-girl_front.webp', odhuvar:'billboards/CRW-13_odhuvar_front.webp', server:'billboards/CRW-14_server_side.webp',
   pot:'billboards/PRP-02_pongal-pot_front.webp', cane:'billboards/PRP-03_sugarcane_front.webp', banana:'billboards/PRP-04_banana_front.webp', palm:'billboards/PRP-05_coconut-palm_front.webp',
   palm2:'billboards/PRP-05_coconut-palm_side.webp', ropePost:'billboards/PRP-09_rope-post_front.webp', cart:'billboards/PRP-13_bullock-cart_side.webp', mango:'billboards/PRP-14_mango-leaves_front.webp',
-  feast:'billboards/PRP-12_feast-leaf_front.webp', bannerCloth:'tex/PRP-07_banner-cloth.jpg'
+  feast:'billboards/PRP-12_feast-leaf_front.webp', crown:'billboards/PRP-10_crown_front.webp', canopy:'billboards/PRP-06_canopy_front.webp', lampSet:'billboards/PRP-15_lamps_back.webp', thavil:'billboards/PRP-08_thavil_side.webp', teak:'tex/MAT-teak.jpg', coin:'billboards/PRP-11_coin-cloth_front.webp', bannerCloth:'tex/PRP-07_banner-cloth.jpg'
 };
 // height in metres of each person or object as drawn (raised arms included)
 const CROWD = [['crw01', 2.15], ['crw02', 1.7], ['crw03', 2.0], ['crw04', 1.58], ['crw05', 2.55], ['crw06', 1.28], ['crw07', 1.62], ['crw08', 2.12], ['crw09', 1.62]];
@@ -2201,6 +2230,8 @@ function applyWorldArt(){
       billboard('elephant', 5.0, e.x + 0.47, e.top, e.z + (e.bg ? 0 : 0.2), {stone:true, flip:true, shadow:false});
     }
   }
+  if (ART.crown && adityaCrown){ adityaCrown.visible = false; billboard('crown', 0.42, adityaCrown.position.x, adityaCrown.position.y - 0.08, adityaCrown.position.z + 0.15, {glow:0.35, shadow:false}); }
+  if (ART.teak) useSurface(MAT.wood, ART.teak, 1, 2);
   if (ART.bannerCloth){ const t = ART.bannerCloth; t.colorSpace = THREE.SRGBColorSpace; MAT.banner.map = t; MAT.banner.needsUpdate = true; }
   if (ART.ropePost) for (const P of PROC.posts){ P.post.visible = P.fin.visible = false; billboard('ropePost', 2.4, P.x, 0, -0.6, {glow:0.12}); }
   if (ART.palm && PROC.palms){ const {trunks, fronds, n} = PROC.palms; trunks.visible = fronds.visible = false;
@@ -2298,6 +2329,10 @@ function applyArenaArt(){
   if (ART.cane && ARENA.cane){ ARENA.cane.visible = false; billboard('cane', 2.3, AX + 41.5, 0, 2.5, {glow:0.14}); billboard('cane', 2.2, AX + 41.9, 0, -2.6, {glow:0.14, flip:true}); }
   if (ART.pot) for (const P of ARENA.pots){ for (const o of P.o) o.visible = false; billboard('pot', 1.05, AX + P.x, 0, P.z, {glow:0.15, flip:P.x < -3}); }
   if (ART.mango) billboard('mango', 0.6, AX + 42.15, 2.6, -0.05, {glow:0.15});
+  if (ART.canopy && ARENA.canopy){ ARENA.canopy.visible = false; billboard('canopy', 2.7, AX + 20, 2.0, -6.9, {glow:0.15, shadow:false}); }
+  if (ART.lampSet) for (const [x, z] of [[-3.3, 0.2], [39.2, 2.3]]) billboard('lampSet', 0.55, AX + x, 0, z, {glow:0.3, shadow:false});
+  if (ART.thavil) billboard('thavil', 0.5, AX + 31.9, 0.5, -4.5, {glow:0.15});
+  if (ART.coin) $('jkres').querySelector('.coin').src = ART_DIR + ART_FILES.coin;
   if (ART.palm && ARENA.palms){ const {tr, fr, n} = ARENA.palms; tr.visible = fr.visible = false;
     const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
     for (let i = 0; i < n; i++){ tr.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, 0, p.z, s.x, 0, i % 2]); }

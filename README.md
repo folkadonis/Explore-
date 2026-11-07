@@ -24,7 +24,7 @@ Open `prototype/index.html` in a browser. The game plays in **landscape**: on a 
 |---|---|---|---|
 | Run | A / D or ← → | Drag anywhere on the left half of the screen | Left stick or d-pad |
 | Jump (hold for higher) | Space or W | JUMP | A |
-| Shadow Step | K, E or Shift | STEP (glows when shade is in reach) | X, RB or RT |
+| Shadow Step | K, E or Shift | STEP (glows when shade is in reach; if nothing is ahead it looks behind you) | X, RB or RT |
 | Cut (ropes, enemies) | J or F | CUT (glows when something is in range) | B or Y |
 
 **Guided tutorial:** one objective at a time, shown at the top of the screen with the button to press. The matching touch button pulses. Each objective stays until you've done it, so nothing is missed: run, jump, hold-jump, gap jump, first Shadow Step, Step chains, mid-air Steps, timing a moving shadow, cutting canopies for shade, and escaping the hall.
@@ -44,7 +44,12 @@ Open `prototype/index.html` in a browser. The game plays in **landscape**: on a 
 
 **How shade works:** the game computes shade from the same sun the renderer uses, so any violet-blue shade you see on the walkway is shade you can step into. Reachable patches glow faintly.
 
-**After Chapter 1: Interlude I, jallikattu.** A playable memory of Mattu Pongal four years earlier. Hold three bulls (Vellaiyan, Karuppan and the palace bull Sivappan): tap **GRIP** as the ring closes on the hump, lean against each buck to keep the needle centred, tap **GRIP** on every hoof-fall, then **SNATCH** the coin cloth from the horns. Scored, with your best saved.
+**After Chapter 1: Interlude I, jallikattu.** A playable memory of Mattu Pongal. It uses **one action: tap anywhere** (or Space).
+1. **Grab:** tap as the gold ring closes on the bull's hump. Time slows as he reaches you, and tapping early is forgiven.
+2. **Ride:** tap each time the ring on the right closes, as his hooves land. You have three grips; a missed beat costs one, and every streak of 5 wins one back.
+3. **Cloth:** when he drops his head, tap to take the coin cloth.
+
+Each retry widens the timing window, and Captain Veeran gives a tip. After three tries the memory moves on, so nobody gets stuck.
 
 **The slice covers:** waking on the temple steps, learning Shadow Step, the frozen elephant procession, a swinging banner timing jump, the canopy courtyard puzzle, the coronation hall chase, and the end beat with Prince Aditya.
 
