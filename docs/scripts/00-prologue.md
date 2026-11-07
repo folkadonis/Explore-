@@ -56,7 +56,7 @@ MATCH CUT: the carved boy's leap becomes:
 
 ---
 
-**(ALTERNATE) EXT. KAVERI RIVER, BATHING GHAT. DUSK. (YEARS LATER)**
+**(ALTERNATE) EXT. VEGAVATHI RIVER, BATHING GHAT. DUSK. (YEARS LATER)**
 
 *Version A, from the original bible.* Wide and static. Gold water and a ferry pole knocking against the steps. Older ILAN sits on the lowest step with his feet in the river. Push in over his shoulder. The same two V.O. lines play, then the same match cut, using a kingfisher's dive instead of the carving.
 

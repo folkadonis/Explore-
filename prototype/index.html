@@ -114,6 +114,34 @@ body.cine #controls{opacity:.15}
 @keyframes pop{40%{transform:scale(1.25)}}
 #tm{opacity:.7;font-weight:400;margin-left:4px}
 .sp-MEM b{color:var(--violet)} .sp-MEM p{font-style:italic}
+.sp-VEERAN b,.sp-HEADMAN b,.sp-ADITYA b{color:#f0d9ad}
+#jkhud{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:none;flex-direction:column;align-items:center;gap:6px;
+  background:rgba(14,9,22,.74);border-radius:12px;padding:8px 14px 10px;pointer-events:none}
+#jkhud.show{display:flex}
+#jkhud .nm{font-family:var(--display);font-size:13px;letter-spacing:.08em;color:var(--gold);white-space:nowrap}
+#jkhud .row{display:flex;gap:12px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+#jkhud .bal{position:relative;width:240px;height:12px;border-radius:6px;background:linear-gradient(90deg,#a3201d 0,#3a2b44 20%,#3a2b44 80%,#a3201d 100%);transition:opacity .3s}
+#jkhud .bal::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,.55)}
+#jkhud .needle{position:absolute;top:-4px;width:6px;height:20px;margin-left:-3px;border-radius:3px;background:#fff;box-shadow:0 0 8px #fff}
+#jkhud .bal.warn .needle{background:#ff6a5a;box-shadow:0 0 10px #ff6a5a}
+#jkhud .grip{width:240px;height:6px;border-radius:3px;background:#3a2b44;overflow:hidden;transition:opacity .3s}
+#jkhud .grip i{display:block;height:100%;background:var(--gold)}
+#jkhud:not(.riding) .bal,#jkhud:not(.riding) .grip{opacity:.3}
+#beatdot{width:10px;height:10px;border-radius:50%;background:#3a2b44}
+#beatdot.on{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+#jkring{position:fixed;left:0;top:0;width:70px;height:70px;border-radius:50%;border:3px solid var(--gold);opacity:0;pointer-events:none;box-shadow:0 0 12px rgba(233,182,92,.7)}
+#jkring.now{border-color:#fff;box-shadow:0 0 24px #fff}
+#jkflash{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%) scale(.9);font-family:var(--display);font-size:clamp(22px,4vw,34px);letter-spacing:.06em;opacity:0;
+  transition:opacity .15s,transform .2s;pointer-events:none;text-shadow:0 2px 12px #000;white-space:nowrap}
+#jkflash.show{opacity:1;transform:translate(-50%,-50%) scale(1)} #jkflash.good{color:var(--gold)} #jkflash.bad{color:#ff8a7a}
+#jkres{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);background:rgba(14,9,22,.86);border:1px solid rgba(233,182,92,.5);border-radius:14px;
+  padding:16px 26px;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
+#jkres.show{opacity:1} #jkres.bad{border-color:rgba(255,138,122,.5)}
+#jkres h3{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:26px} #jkres p{margin:0;font-size:15px} #jkres small{display:block;margin-top:8px;font-size:15px;color:var(--gold)}
+.btn.jump.beat{background:rgba(233,182,92,.6);transform:scale(1.07)}
+#flash{position:fixed;inset:0;background:#fff8e8;opacity:0;pointer-events:none;transition:opacity 1.6s}
+#flash.on{opacity:1;transition:none}
+@media (pointer:coarse){#jkhud .bal,#jkhud .grip{width:190px}}
 @media (prefers-reduced-motion:reduce){#title .go{animation:none}}
 </style>
 </head>
@@ -138,6 +166,8 @@ body.cine #controls{opacity:.15}
 </div>
 <div class="layer" id="loading">CARVING KANCHI…</div>
 <div id="err"></div>
+<div id="jkhud"><div class="nm"></div><div class="row"><span class="dist"></span><i id="beatdot"></i><span class="sc"></span></div><div class="bal"><i class="needle"></i></div><div class="grip"><i></i></div></div>
+<div id="jkring"></div><div id="jkflash"></div><div id="jkres"><h3></h3><p></p><small></small></div><div id="flash"></div>
 <div id="controls">
   <div id="stickZone" class="idle"><div id="stickBase"><div id="stickKnob"></div></div><span id="stickHint">DRAG TO RUN</span></div>
   <div id="rpad">
@@ -292,14 +322,15 @@ composer.addPass(bloom);
 composer.addPass(new OutputPass());
 // Final grade: violet-lifted shadows, warm highlights, vignette, fine grain.
 const grade = new ShaderPass({
-  uniforms:{tDiffuse:{value:null}, time:{value:0}, vig:{value:0.32}},
+  uniforms:{tDiffuse:{value:null}, time:{value:0}, vig:{value:0.32}, mem:{value:0}},
   vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-  fragmentShader:`uniform sampler2D tDiffuse; uniform float time, vig; varying vec2 vUv;
+  fragmentShader:`uniform sampler2D tDiffuse; uniform float time, vig, mem; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))+time*7.0)*43758.5453); }
     void main(){
       vec3 c = texture2D(tDiffuse, vUv).rgb;
       float l = dot(c, vec3(.2126,.7152,.0722));
-      c += vec3(.035,.01,.07) * (1.-smoothstep(0.,.45,l));      // violet in the shadows
+      c += vec3(.035,.01,.07) * (1.-smoothstep(0.,.45,l)) * (1.-mem);      // violet in the shadows (not in memories)
+      c *= mix(vec3(1.), vec3(1.05,1.0,.9), mem);
       c *= mix(vec3(1.), vec3(1.04,1.0,.94), smoothstep(.4,1.,l)); // warm highlights
       c = mix(vec3(l), c, 1.06);
       vec2 d = vUv-.5; c *= 1. - vig*dot(d,d)*2.2;
@@ -332,16 +363,16 @@ scene.add(bounce);
 
 const skyMat = new THREE.ShaderMaterial({
   side:THREE.BackSide, depthWrite:false, fog:false,
-  uniforms:{ sunDir:{value:TO_SUN.clone()}, time:{value:0} },
+  uniforms:{ sunDir:{value:TO_SUN.clone()}, time:{value:0}, mem:{value:0} },
   vertexShader:`varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position = p.xyww; }`,
-  fragmentShader:`uniform vec3 sunDir; uniform float time; varying vec3 vDir;
+  fragmentShader:`uniform vec3 sunDir; uniform float time, mem; varying vec3 vDir;
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
     float noise(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.-2.*f);
       return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
                  mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
     void main(){
       vec3 d = normalize(vDir); float e = d.y;
-      vec3 hor = vec3(1.0,.70,.45), mid = vec3(.80,.43,.33), zen = vec3(.25,.17,.38), gnd = vec3(.42,.26,.2);
+      vec3 hor = mix(vec3(1.0,.70,.45), vec3(1.0,.87,.68), mem), mid = mix(vec3(.80,.43,.33), vec3(.82,.74,.62), mem), zen = mix(vec3(.25,.17,.38), vec3(.30,.47,.76), mem), gnd = vec3(.42,.26,.2);
       vec3 c = mix(hor, mid, smoothstep(.0,.22,e));
       c = mix(c, zen, smoothstep(.2,.85,e));
       c = mix(c, gnd, smoothstep(.0,-.12,e));
@@ -794,6 +825,15 @@ function poseRig(r, p){
     set(r.sh[0], -0.9 + sw, 0, -0.35); set(r.sh[1], -0.9 - sw, 0, 0.35); set(r.el[0], -0.5); set(r.el[1], -0.5);
     r.pelvis.position.y = 0.82;
   }
+  else if (p.name === 'ready'){
+    const b = Math.sin(t*5)*0.03;
+    set(r.hip[0], -0.45, 0, -0.25); set(r.hip[1], -0.2, 0, 0.25); set(r.kn[0], 0.8); set(r.kn[1], 0.6);
+    set(r.spine, 0.4 + b); set(r.head, -0.35); set(r.sh[0], -0.9, 0, -0.5); set(r.sh[1], -0.9, 0, 0.5); set(r.el[0], -0.4); set(r.el[1], -0.4);
+    r.pelvis.position.y = 0.78 + b;
+  } else if (p.name === 'ride'){
+    set(r.hip[0], -1.25, 0, -0.55); set(r.hip[1], -1.25, 0, 0.55); set(r.kn[0], 1.5); set(r.kn[1], 1.5);
+    set(r.spine, 1.05); set(r.head, -0.75); set(r.sh[0], -1.55, 0, 0.35); set(r.sh[1], -1.55, 0, -0.35); set(r.el[0], -0.55); set(r.el[1], -0.55);
+  }
   if (p.atk){ set(r.sh[1], -1.9 + (1 - p.atk/0.22)*2.4, 0, 0.3); set(r.el[1], -0.2); }
 }
 // Bake a posed rig (or any group) into one geometry per material, then wrap as meshes.
@@ -911,6 +951,7 @@ const shadeAt = (x, y, sh) => sh.some(s => Math.abs(s.y - y) < 0.05 && x >= s.x1
 // =====================================================================
 // World construction
 // =====================================================================
+const PALM = {};
 let ilan, nizhal, ghost, adityaCrown, swingMesh, swingRopes, canopyMeshes = [], laneGlows = [], walkerRigs = [];
 const glowPS = {}, smokePS = {}, dust = {};
 
@@ -963,7 +1004,7 @@ function buildWorld(){
   for (let i = 0; i < 12; i++){ const f = new THREE.PlaneGeometry(1.5, 4.2, 1, 6); const p = f.attributes.position;
     for (let k = 0; k < p.count; k++){ const yy = p.getY(k) + 2.1; p.setY(k, yy); p.setZ(k, -0.06*yy*yy); }
     f.rotateX(-1.0 - (i%3)*0.25); f.rotateY(i/12*Math.PI*2); f.translate(2.6, 11, 0); frondParts.push(f); }
-  const frondG = merge(frondParts), PN = 46;
+  const frondG = merge(frondParts), PN = 46; PALM.trunk = trunkG; PALM.frond = frondG;
   const trunks = new THREE.InstancedMesh(trunkG, MAT.trunk, PN), fronds = new THREE.InstancedMesh(frondG, MAT.frond, PN);
   rngS = 51;
   for (let i = 0; i < PN; i++){ const x = -30 + rnd()*260, z = -20 - rnd()*70, s = 0.9 + rnd()*0.5;
@@ -1208,7 +1249,7 @@ addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) held[k] = 0; }
 for (const b of document.querySelectorAll('.btn')){
   const k = b.dataset.k;
   b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture(e.pointerId); } catch(err){}
-    press(k); b.classList.add('held'); buzz(8); if (state !== 'play') advance(); });
+    press(k); b.classList.add('held'); buzz(8); if (state !== 'play' && state !== 'jk') advance(); });
   const off = () => { held[k] = 0; b.classList.remove('held'); };
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, off);
   b.addEventListener('contextmenu', e => e.preventDefault());
@@ -1228,7 +1269,7 @@ function moveStick(e){
 }
 zone.addEventListener('pointerdown', e => {
   e.preventDefault(); audio.start();
-  if (state !== 'play'){ advance(); return; }
+  if (state !== 'play' && state !== 'jk'){ advance(); return; }
   if (stickId !== null) return;
   stickId = e.pointerId; try { zone.setPointerCapture(e.pointerId); } catch(err){}
   const r = zone.getBoundingClientRect(); sx0 = e.clientX; sy0 = e.clientY; placeBase(e.clientX - r.left, e.clientY - r.top);
@@ -1248,11 +1289,11 @@ function pollPad(){
   const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
   let ax = gp.axes[0] || 0; if (Math.abs(ax) < 0.22) ax = 0; if (b(14)) ax = -1; if (b(15)) ax = 1; padAx = ax;
   const now = {jump:b(0), step:b(2) || b(5) || b(7), cut:b(1) || b(3), start:b(9)};
-  for (const k of ['jump', 'step', 'cut']){ if (now[k] && !padPrev[k]){ press(k); if (state !== 'play') advance(); } else if (!now[k] && padPrev[k]) held[k] = 0; }
+  for (const k of ['jump', 'step', 'cut']){ if (now[k] && !padPrev[k]){ press(k); if (state !== 'play' && state !== 'jk') advance(); } else if (!now[k] && padPrev[k]) held[k] = 0; }
   if (now.start && !padPrev.start) advance();
   padPrev = now;
 }
-canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (state !== 'play') advance(); });
+canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (state !== 'play' && state !== 'jk') advance(); });
 for (const id of ['title', 'credits', 'death']) $(id).addEventListener('pointerdown', () => advance());
 addEventListener('blur', () => { for (const k in held) held[k] = 0; stickAx = 0; });
 $('go').textContent = TOUCH ? 'Tap to begin' : 'Press Enter to begin';
@@ -1293,12 +1334,16 @@ function advance(){
   if (state === 'cut'){
     if (cutT < 0.35) return;
     cutI++; cutT = 0;
-    if (cutI >= cutLines.length){ $('sub').className = ''; document.body.classList.remove('cine');
+    if (cutI >= cutLines.length){ $('sub').className = '';
+      if (cutThen === 'bridge'){ startCut(BRIDGE, 'arena'); return; }
+      if (cutThen === 'arena'){ enterArena(); startCut(JK_INTRO, 'jk'); return; }
+      document.body.classList.remove('cine');
+      if (cutThen === 'jk'){ state = 'jk'; startBull(jkNext); return; }
       if (cutThen === 'credits'){ state = 'credits'; creditsT = 0; showCredits(); } else { state = 'play'; wakeAnim = 3; $('hud').classList.remove('hide'); } }
     else showSub();
     return;
   }
-  if (state === 'credits' && creditsT > 1.6){ $('credits').classList.remove('show'); newGame(); state = 'cut'; startCut(INTRO.slice(5), 'play'); }
+  if (state === 'credits' && creditsT > 1.6){ $('credits').classList.remove('show'); exitArena(); newGame(); state = 'cut'; startCut(INTRO.slice(5), 'play'); }
 }
 const fmtT = t => `${Math.floor(t/60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 function showCredits(){
@@ -1309,6 +1354,8 @@ function showCredits(){
   let rank = isBest ? (best ? `New best time. Your last best was ${fmtT(best.time)}.` : 'First run recorded. Beat this time.') : `Your best time is ${fmtT(best.time)}.`;
   if (deaths === 0 && memCount === MEMS.length) rank = 'Every memory found, and told without a single mistake. ' + rank;
   else if (memCount < MEMS.length) rank += ` ${MEMS.length - memCount} shadow-memories are still out there.`;
+  if (inArena){ const jb = Math.max(jkBest, jkScore); rank += ` Jallikattu: ${jkScore.toLocaleString()} points${jkScore >= jkBest && jkScore > 0 ? ' (new best)' : ` (best ${jb.toLocaleString()})`}.`;
+    document.querySelector('#credits .k').textContent = 'END OF CHAPTER I · INTERLUDE I'; }
   $('rank').textContent = rank;
   $('again').textContent = TOUCH ? 'Tap to play again' : 'Enter to play again';
   $('credits').classList.add('show');
@@ -1375,14 +1422,15 @@ function update(dt){
     if (hallSpawned && P.x > HALL.x0 && P.x < HALL.x1 - 2){ debrisT -= dt;
       if (debrisT <= 0){ debrisT = 0.35 + Math.random()*0.4; const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2 + Math.random()*0.25), MAT.mason);
         m.castShadow = true; m.position.set(P.x + 2 + Math.random()*7, HALL.y0 - 0.3, -0.5 - Math.random()*2.5); scene.add(m); debris.push({m, vy:0, spin:Math.random()*6}); } }
-    if (P.alive && P.x > 175.5){ P.vx = 0; startCut(ENDING, 'credits'); $('hud').classList.add('hide'); }
+    if (P.alive && P.x > 175.5){ P.vx = 0; startCut(ENDING, 'bridge'); $('hud').classList.add('hide'); }
   } else if (state === 'cut'){
     cutT += dt;
-    if (cutThen === 'credits'){ // walk Ilan to his mark before Aditya
+    if (cutLines === ENDING || cutLines === BRIDGE){ // walk Ilan to his mark before Aditya
       const goal = 176.2; if (P.x < goal){ P.x = Math.min(goal, P.x + RUN*0.35*dt); P.phase += dt*6; } P.face = 1;
       P.nzx += (P.x - 1.0 - P.nzx)*Math.min(1, dt*3);
     }
-  } else if (state === 'credits') creditsT += dt;
+  } else if (state === 'jk') updateJK(dt);
+  else if (state === 'credits') creditsT += dt;
   for (const d of debris){ d.vy -= G*0.7*dt; d.m.position.y += d.vy*dt; d.m.rotation.x += d.spin*dt;
     if (d.m.position.y < 0.15 && !d.dead){ d.dead = 1; emit(smokePS, d.m.position.x, 0.2, d.m.position.z, 10, [0.55, 0.42, 0.34, 0.5], {spd:1.5, life:1.2, size:0.9, grow:2.5, up:0.4}); scene.remove(d.m); shakeT = Math.max(shakeT, 0.12); } }
   debris = debris.filter(d => !d.dead);
@@ -1470,6 +1518,7 @@ function faceRig(r, face){ r.root.rotation.y = face > 0 ? Math.PI/2 : -Math.PI/2
 let uiReady = null, uiCut = null, tmT = 0, camY = 0, camAhead = 1.7;
 const stepBtn = document.querySelector('.btn.step'), cutBtn = document.querySelector('.btn.cut');
 function updateVisuals(dt){
+  if (inArena){ jkVisuals(dt); return; }
   // swinging banner and its ropes
   const s = swingState(time);
   swingMesh.position.set(s.cx, s.top, SWING.z); swingMesh.rotation.z = -s.th*0.15;
@@ -1488,7 +1537,7 @@ function updateVisuals(dt){
     const sq = P.squash > 0 ? Math.sin(P.squash/0.12*Math.PI)*0.08 : 0; ilan.root.scale.set(1 + sq*0.5, 1 - sq, 1 + sq*0.5);
     const moving = Math.abs(P.vx) > 0.5;
     poseRig(ilan, {name: !P.ground ? 'air' : moving ? 'run' : 'idle', phase:P.phase, t:time, atk:P.atk});
-    if (state === 'cut' && cutThen === 'credits') poseRig(ilan, {name: P.x < 176.19 ? 'run' : 'idle', phase:P.phase, t:time});
+    if (state === 'cut' && (cutLines === ENDING || cutLines === BRIDGE)) poseRig(ilan, {name: P.x < 176.19 ? 'run' : 'idle', phase:P.phase, t:time});
     ilan.sword.visible = P.atk > 0;
     // lying on the steps during the intro, then rising
     let lie = 0; if (state === 'cut' && cutThen === 'play' && cutLines === INTRO) lie = cutLines[cutI].wake === 2 ? 0 : 1;
@@ -1547,6 +1596,428 @@ function updateVisuals(dt){
 }
 
 // =====================================================================
+// Interlude I: Eru Thazhuvuthal (jallikattu), Mattu Pongal, four years before the curse.
+// Built far from the palace level (x = 1000) and lit by a low Thai-month morning sun.
+// =====================================================================
+const AX = 1000, ILAN_X = AX + 24;
+const BULLS = [
+  {name:'Vellaiyan', house:'the house of Muthan the potter', col:0xd8d0c2, horn:0xb3262b, speed:7.0, rideV:1.7, dist:15, period:0.86, force:1.2, switchP:0, pause:0},
+  {name:'Karuppan', house:'the Pulikulam herders', col:0x2a2422, horn:0x2a5fb0, speed:8.6, rideV:1.9, dist:15, period:0.72, force:1.55, switchP:0.35, pause:0},
+  {name:'Sivappan', house:'the palace herd', col:0x7c3a22, horn:0xd9a441, speed:9.4, rideV:2.0, dist:20, period:0.64, force:1.8, switchP:0.3, pause:1}
+];
+const A = (x, y, z) => [AX + x, y, z];
+const BRIDGE = [
+  {sp:'NIZHAL', t:'You said he never looked down on you. Prove it.', cam:[175.6,2.9,5.6], look:[175.4,2.3,-0.4]},
+  {sp:'VO', t:'Before I tell you about the stepwell, you should know who I was.', cam:[173.5,3.2,6.5], look:[178.4,3.0,-1.2]},
+  {sp:'VO', t:'Four Pongals before the coronation. Mattu Pongal. I was sixteen.', cam:[171,8,15], look:[178,4,-2]}
+];
+const JK_INTRO = [
+  {sp:'VO', t:'Sevvappur village. Every house had boiled its Pongal at sunrise.', cam:A(-9,3.2,9), look:A(-2,1.2,-1)},
+  {sp:'VO', t:'Kolams at every door. Sugarcane at every gate. The parai never stopped.', cam:A(6,5,16), look:A(20,1.5,-4)},
+  {sp:'VEERAN', t:'Your father know you\'re here?', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
+  {sp:'ILAN', t:'My father\'s carving a wall in Kanchi.', cam:A(25.6,1.8,3.6), look:A(24,1.5,0)},
+  {sp:'VEERAN', t:'Then I\'ll be the one who carries you home.', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
+  {sp:'HEADMAN', t:'From the house of Muthan the potter: Vellaiyan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
+  {sp:'VO', t:'Hold the hump. Not the horns, not the tail. Fifteen strides, and the cloth on his horns is yours.', cam:A(30,2.6,9), look:A(36,1.2,0)}
+];
+const JK_BETWEEN = [[
+  {sp:'VO', t:'Vellaiyan was a gentle bull. Every boy in the district had held him.', cam:A(14,3,9), look:A(20,1.4,-2)},
+  {sp:'HEADMAN', t:'From the house of the Pulikulam herders: Karuppan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
+  {sp:'VEERAN', t:'Not that one. Karuppan spins.', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
+  {sp:'ILAN', t:'Then I\'ll spin with him.', cam:A(25.6,1.8,3.6), look:A(24,1.5,0)}
+], [
+  {sp:'HEADMAN', t:'From the royal herd, the bull of the palace: Sivappan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
+  {sp:'VO', t:'Nobody had held Sivappan in three Pongals.', cam:A(34,1.4,6), look:A(43,1.9,0)},
+  {sp:'VO', t:'On the elders\' platform, the prince had stopped leaning over the rail. He was gripping it.', cam:A(17,3.4,1.5), look:A(20,3.0,-6.3)}
+]];
+const JK_OUTRO = [
+  {sp:'HEADMAN', t:'Sivappan of the palace herd has been held! Honour to the royal house!', cam:A(8,3,10), look:A(14,1.5,-3)},
+  {sp:'VO', t:'That was the rule. The honour goes to the house that raised the bull.', cam:A(1,1.8,5), look:A(3,1.3,0)},
+  {sp:'VO', t:'Nobody asked my name. I told myself I didn\'t mind.', cam:A(-0.6,1.6,4.2), look:A(2.6,1.3,0)},
+  {sp:'ADITYA', t:'You held him.', cam:A(5.6,1.6,3.6), look:A(3.6,1.4,0)},
+  {sp:'ILAN', t:'Your house held him. The headman said so.', cam:A(1.2,1.6,3.6), look:A(3.2,1.4,0)},
+  {sp:'ADITYA', t:'I was watching. You held him.', cam:A(5.6,1.6,3.6), look:A(3.6,1.4,0)},
+  {sp:'VO', t:'He was the only one who said my name that day. You forget the wrong things.', cam:A(-4,4,12), look:A(4,1.2,-2)}
+];
+
+let inArena = false, arenaBuilt = false, jk = null, jkNext = 0, jkScore = 0, jkBest = 0, jkTotalFirm = 0;
+const bullRigs = [], crowd = [], people = {}, steamSpots = [];
+let paraiT = 0, paraiN = 0, flashMsg = null;
+const SUN_JK = new THREE.Vector3(0.72, 0.5, 0.48).normalize();
+const SAVED = {};
+
+function leafTex(w, h, fn){ const t = canvasTexture(w, h, fn); return t; }
+function bananaLeafTex(){
+  return leafTex(128, 512, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    const grd = g.createLinearGradient(0, 0, w, 0); grd.addColorStop(0, '#3f6b22'); grd.addColorStop(0.5, '#6a9a35'); grd.addColorStop(1, '#3f6b22');
+    g.fillStyle = grd; g.beginPath(); g.moveTo(w/2, h); g.bezierCurveTo(-10, h*0.7, 0, h*0.1, w/2, 0); g.bezierCurveTo(w, h*0.1, w + 10, h*0.7, w/2, h); g.fill();
+    g.strokeStyle = 'rgba(30,50,15,.45)'; g.lineWidth = 1;
+    for (let y = 8; y < h; y += 7){ g.beginPath(); g.moveTo(w/2, y); g.lineTo(4, y + 14); g.moveTo(w/2, y); g.lineTo(w - 4, y + 14); g.stroke(); }
+    g.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 9; i++){ const y = 40 + i*50 + Math.random()*20, s = Math.random() < .5 ? 0 : w; g.fillRect(s === 0 ? 0 : w - 30, y, 30, 2.5); }
+    g.globalCompositeOperation = 'source-over'; g.fillStyle = '#c9d68a'; g.fillRect(w/2 - 2, 0, 4, h);
+  });
+}
+function kolamTex(){
+  return canvasTexture(512, 512, (g, w, h) => {
+    g.clearRect(0, 0, w, h); const n = 7, sp = w/(n + 1);
+    g.lineWidth = 6; g.strokeStyle = 'rgba(250,246,236,.95)'; g.lineCap = 'round';
+    for (let i = 0; i < n - 1; i++) for (let j = 0; j < n - 1; j++){ const cx = sp*(i + 1.5), cy = sp*(j + 1.5);
+      if ((i + j) % 2 === 0){ g.fillStyle = (i*j) % 3 ? 'rgba(200,40,40,.55)' : 'rgba(240,190,40,.6)'; g.beginPath(); g.arc(cx, cy, sp*0.42, 0, 7); g.fill(); }
+      g.beginPath(); g.arc(cx, cy, sp*0.71, 0, 7); g.stroke(); }
+    g.fillStyle = '#fffaf0'; for (let i = 1; i <= n; i++) for (let j = 1; j <= n; j++){ g.beginPath(); g.arc(sp*i, sp*j, 5, 0, 7); g.fill(); }
+    g.strokeRect(sp*0.4, sp*0.4, w - sp*0.8, h - sp*0.8);
+  });
+}
+function weaveTex(){
+  return canvasTexture(256, 128, (g, w, h) => {
+    g.fillStyle = '#7d6a3e'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 8) for (let x = 0; x < w; x += 8){ g.fillStyle = ((x + y)/8) % 2 ? '#9c8550' : '#6e5c34'; g.fillRect(x, y, 8, 4); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(x, y + 4, 8, 1); }
+  });
+}
+
+function makeBull(def){
+  const skin = new THREE.MeshStandardMaterial({color:def.col, roughness:0.72, normalMap:MAT.earth.normalMap, normalScale:new THREE.Vector2(0.3, 0.3)});
+  const horn = new THREE.MeshStandardMaterial({color:def.horn, roughness:0.45});
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const add = (g, geo, m, x, y, z, sx=1, sy=1, sz=1, rx=0, ry=0, rz=0) => { const me = new THREE.Mesh(geo, m); me.position.set(x, y, z); me.scale.set(sx, sy, sz); me.rotation.set(rx, ry, rz); me.castShadow = me.receiveShadow = true; g.add(me); return me; };
+  const S = (r=1, a=20, b=14) => new THREE.SphereGeometry(r, a, b);
+  add(body, S(1, 24, 16), skin, 0, 1.18, 0, 1.05, 0.55, 0.42);                 // barrel
+  add(body, S(), skin, 0.5, 1.28, 0, 0.55, 0.56, 0.45);                          // shoulders
+  add(body, S(0.34, 16, 12), skin, 0.42, 1.78, 0, 1, 1.15, 0.78);               // hump (thimil)
+  add(body, S(), skin, -0.65, 1.22, 0, 0.46, 0.5, 0.41);                         // haunch
+  add(body, new THREE.CylinderGeometry(0.2, 0.3, 0.7, 14), skin, 1.0, 1.42, 0, 1, 1, 0.9, 0, 0, -1.0);
+  add(body, S(1, 14, 10), skin, 0.95, 0.9, 0, 0.42, 0.38, 0.07);                // dewlap
+  const head = new THREE.Group(); head.position.set(1.32, 1.52, 0); body.add(head);
+  add(head, S(1, 16, 12), skin, 0.12, -0.06, 0, 0.3, 0.18, 0.16, 0, 0, -0.6);
+  add(head, S(1, 12, 10), skin, 0.3, -0.25, 0, 0.13, 0.11, 0.12);
+  for (const s of [-1, 1]){
+    add(head, S(1, 10, 8), skin, 0.02, 0.0, s*0.18, 0.1, 0.05, 0.13);
+    const c = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.1, s*0.09), new THREE.Vector3(-0.02, 0.32, s*0.2), new THREE.Vector3(0.06, 0.55, s*0.24), new THREE.Vector3(0.14, 0.7, s*0.18)]);
+    add(head, new THREE.TubeGeometry(c, 12, 0.035, 8), horn, 0, 0, 0);
+    add(head, new THREE.SphereGeometry(0.042, 8, 6), MAT.brass, 0.14, 0.71, s*0.18);
+  }
+  const cloth = new THREE.Group(); cloth.position.set(0.04, 0.4, 0); head.add(cloth);
+  add(cloth, S(0.085, 10, 8), MAT.sash, 0, 0, 0, 1, 0.8, 1.7);
+  for (let i = 0; i < 3; i++) add(cloth, new THREE.CylinderGeometry(0.026, 0.026, 0.006, 10), MAT.gold, -0.02 + i*0.02, -0.06, -0.05 + i*0.05, Math.PI/2);
+  add(body, new THREE.TorusGeometry(0.3, 0.055, 6, 22), MAT.kanakambaram, 1.02, 1.3, 0, 0.7, 1, 1, 0, Math.PI/2, -1.0);
+  for (let i = 0; i < 5; i++){ const a = (i/4 - 0.5)*1.8; add(body, new THREE.SphereGeometry(0.045, 8, 6), MAT.brass, 1.0, 1.05 - Math.abs(a)*0.05, Math.sin(a)*0.25); }
+  const legs = [];
+  for (const [x, z] of [[0.7, 0.2], [0.7, -0.2], [-0.68, 0.2], [-0.68, -0.2]]){
+    const L = new THREE.Group(); L.position.set(x, 1.02, z); body.add(L);
+    add(L, new THREE.CylinderGeometry(0.1, 0.075, 0.55, 10), skin, 0, -0.27, 0);
+    const K = new THREE.Group(); K.position.y = -0.53; L.add(K);
+    add(K, new THREE.CylinderGeometry(0.06, 0.05, 0.42, 8), skin, 0, -0.2, 0);
+    add(K, new THREE.CylinderGeometry(0.055, 0.065, 0.07, 8), MAT.hair, 0, -0.44, 0);
+    legs.push({L, K, front:x > 0});
+  }
+  const tail = new THREE.Group(); tail.position.set(-1.0, 1.35, 0); body.add(tail);
+  add(tail, new THREE.CylinderGeometry(0.025, 0.02, 0.8, 6), skin, -0.05, -0.4, 0, 1, 1, 1, 0, 0, 0.15);
+  add(tail, S(0.07, 8, 6), MAT.hair, -0.1, -0.82, 0, 1, 1.8, 1);
+  root.rotation.y = Math.PI;   // faces -x, down the arena
+  return {root, body, head, legs, tail, cloth, def, ph:0};
+}
+function makePerson(cloth, extra={}){
+  const r = makeRig({skin:MAT.skin, cloth, sash:extra.sash || cloth, hair:MAT.hair, metal:MAT.gold, eye:MAT.hair}, {sash:!!extra.sash, earrings:1});
+  scene.add(r.root); return r;
+}
+
+function buildArena(){
+  if (arenaBuilt) return; arenaBuilt = true;
+  MAT.kanakambaram = new THREE.MeshStandardMaterial({color:0xe8701a, roughness:0.8});   // kanakambaram orange
+  const sand = new THREE.Mesh(new THREE.PlaneGeometry(200, 90), new THREE.MeshStandardMaterial({color:0xdcb98e, normalMap:MAT.earth.normalMap, normalScale:new THREE.Vector2(0.6, 0.6), roughness:1}));
+  sand.rotation.x = -Math.PI/2; sand.position.set(AX + 20, 0, -20); sand.receiveShadow = true; scene.add(sand);
+  const wood = MAT.wood, weave = new THREE.MeshStandardMaterial({map:weaveTex(), roughness:0.95, side:THREE.DoubleSide});
+  weave.map.wrapS = weave.map.wrapT = THREE.RepeatWrapping; weave.map.repeat.set(12, 1);
+  // barricades: timber posts, rails, and woven palm-leaf panels behind the lane; a low rail on the camera side
+  const posts = []; for (let x = 0; x <= 46; x += 1.6){ posts.push(place(new THREE.CylinderGeometry(0.08, 0.1, 1.9, 8), AX + x, 0.95, -2.6)); }
+  for (const y of [0.55, 1.15, 1.7]) posts.push(place(new THREE.CylinderGeometry(0.05, 0.05, 46, 6), AX + 23, y, -2.6, 0, 0, Math.PI/2));
+  const pm = new THREE.Mesh(merge(posts), wood); pm.castShadow = pm.receiveShadow = true; scene.add(pm);
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(46, 1.5), weave); panel.position.set(AX + 23, 0.85, -2.7); panel.receiveShadow = true; scene.add(panel);
+  // stacked bullock-cart platforms for the crowd, and the elders' platform with its canopy
+  const plats = [place(box(46, 0.5, 1.8), AX + 23, 0.25, -4.0), place(box(46, 1.1, 1.8), AX + 23, 0.55, -5.9)];
+  plats.push(place(box(5, 2.0, 3), AX + 20, 1.0, -6.6));
+  const plm = new THREE.Mesh(merge(plats), wood); plm.castShadow = plm.receiveShadow = true; scene.add(plm);
+  const can = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 3.2), MAT.canopy); can.rotation.x = -Math.PI/2; can.position.set(AX + 20, 4.6, -6.6); can.castShadow = true; scene.add(can);
+  for (const [x, z] of [[17.4, -5.2], [22.6, -5.2], [17.4, -8], [22.6, -8]]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), wood); p.position.set(AX + x, 3.3, z); scene.add(p); }
+  // the vaadivaasal: a narrow timber gate with a thatched roof, mango leaves and banana plants
+  const gate = [place(box(0.5, 3.4, 0.5), AX + 42.5, 1.7, -1.3), place(box(0.5, 3.4, 0.5), AX + 42.5, 1.7, 1.3), place(box(0.7, 0.5, 3.4), AX + 42.5, 3.55, 0)];
+  for (let i = 0; i < 6; i++) gate.push(place(box(0.22, 2.6, 0.22), AX + 44 + i*1.1, 1.3, -1.3), place(box(0.22, 2.6, 0.22), AX + 44 + i*1.1, 1.3, 1.3));
+  gate.push(place(box(7, 0.25, 0.2), AX + 47, 2.2, -1.3), place(box(7, 0.25, 0.2), AX + 47, 2.2, 1.3));
+  const gm = new THREE.Mesh(merge(gate), wood); gm.castShadow = gm.receiveShadow = true; scene.add(gm);
+  const roofG = new THREE.CylinderGeometry(1.6, 1.6, 4.2, 3, 1); roofG.rotateZ(Math.PI/2); roofG.rotateX(-Math.PI/2); roofG.rotateY(Math.PI/2);
+  const thatch = new THREE.MeshStandardMaterial({color:0x8a6e42, map:weave.map.clone(), roughness:1}); thatch.map.repeat.set(4, 4);
+  const gr = new THREE.Mesh(roofG, thatch); gr.position.set(AX + 42.5, 4.3, 0); gr.scale.set(0.55, 0.6, 1); gr.castShadow = true; scene.add(gr);
+  const leafM = new THREE.MeshStandardMaterial({color:0x3f7a2a, roughness:0.7, side:THREE.DoubleSide});
+  const mango = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.06, 0.2), leafM, 30); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1);
+  for (let i = 0; i < 30; i++){ const z = -1.4 + i*0.097; m4.compose(v.set(AX + 42.1, 3.15 - Math.sin(i/29*Math.PI)*0.15, z), q.setFromEuler(new THREE.Euler(0, Math.PI/2, 0)), sc); mango.setMatrixAt(i, m4); }
+  scene.add(mango);
+  const bl = new THREE.MeshStandardMaterial({map:bananaLeafTex(), alphaTest:0.4, side:THREE.DoubleSide, roughness:0.7});
+  const trunkM = new THREE.MeshStandardMaterial({color:0x8fa35a, roughness:0.8});
+  for (const [x, z] of [[41.8, -1.9], [41.8, 1.9], [-1.5, -2.4]]){
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.15, 2.4, 10), trunkM); t.position.set(AX + x, 1.2, z); t.castShadow = true; scene.add(t);
+    for (let k = 0; k < 6; k++){ const lf = new THREE.PlaneGeometry(0.5, 1.8, 1, 6); const p = lf.attributes.position;
+      for (let i = 0; i < p.count; i++){ const yy = p.getY(i) + 0.9; p.setY(i, yy); p.setZ(i, -0.18*yy*yy); }
+      lf.rotateX(-0.6); lf.rotateY(k/6*Math.PI*2); const mm = new THREE.Mesh(lf, bl); mm.position.set(AX + x, 2.3, z); mm.castShadow = true; scene.add(mm); }
+  }
+  // sugarcane bundles leaning on the gate
+  const cane = [], caneM = new THREE.MeshStandardMaterial({color:0x6b4a5a, roughness:0.6});
+  for (let i = 0; i < 9; i++) cane.push(place(new THREE.CylinderGeometry(0.03, 0.03, 2.4, 6), AX + 41.6 - (i % 3)*0.07, 1.15, 2.2 + i*0.06, 0.1, 0, 0.18));
+  const cm = new THREE.Mesh(merge(cane), caneM); cm.castShadow = true; scene.add(cm);
+  // kolams on the swept earth
+  const kt = kolamTex(), km = new THREE.MeshStandardMaterial({map:kt, transparent:true, depthWrite:false, roughness:1});
+  for (const [x, z, s] of [[-3, 1, 2.6], [8, 4.8, 2.2], [38, 4.6, 2.4], [-6.5, -1.5, 2]]){ const k = new THREE.Mesh(new THREE.PlaneGeometry(s, s), km); k.rotation.x = -Math.PI/2; k.position.set(AX + x, 0.012, z); k.receiveShadow = true; scene.add(k); }
+  // Pongal pots on three-stone hearths, turmeric plant tied at the neck, still steaming from the morning
+  const potM = new THREE.MeshStandardMaterial({color:0x9c4a2a, roughness:0.75}), stoneM = MAT.stone;
+  const potG = lathe([[0, 0], [0.16, 0.02], [0.26, 0.14], [0.27, 0.3], [0.18, 0.44], [0.15, 0.48], [0.19, 0.52], [0.16, 0.54]], 20);
+  for (const [x, z] of [[-4, -0.8], [-2.6, 0.6], [-5.6, 1.2]]){
+    const pot = new THREE.Mesh(potG, potM); pot.position.set(AX + x, 0.22, z); pot.castShadow = true; scene.add(pot);
+    for (let k = 0; k < 3; k++){ const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13), stoneM); const a = k/3*Math.PI*2; st.position.set(AX + x + Math.cos(a)*0.24, 0.1, z + Math.sin(a)*0.24); scene.add(st); }
+    for (let k = 0; k < 5; k++){ const lf = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.32), leafM); lf.position.set(AX + x + Math.cos(k)*0.17, 0.82, z + Math.sin(k)*0.17); lf.rotation.set(0.3, k, 0.2); scene.add(lf); }
+    steamSpots.push([AX + x, 0.78, z]);
+  }
+  // village houses behind the crowd, and coconut palms
+  const HN = 22, walls = new THREE.InstancedMesh(box(1, 1, 1), MAT.lime, HN), roofs = new THREE.InstancedMesh(roofG, thatch, HN), col = new THREE.Color();
+  rngS = 909;
+  for (let i = 0; i < HN; i++){ const x = AX - 12 + i*3.4 + rnd(), z = -11 - rnd()*6, w = 3 + rnd()*1.5, h = 2.4 + rnd()*0.8;
+    m4.compose(v.set(x, h/2, z), q.identity(), sc.set(w, h, 3)); walls.setMatrixAt(i, m4); walls.setColorAt(i, col.setHSL(0.08, 0.3, 0.55 + rnd()*0.15));
+    m4.compose(v.set(x, h + 0.45, z), q.identity(), sc.set(w/2.4, 0.5, 0.95)); roofs.setMatrixAt(i, m4); }
+  walls.receiveShadow = roofs.castShadow = true; sc.set(1, 1, 1); scene.add(walls, roofs);
+  const PNum = 14, tr = new THREE.InstancedMesh(PALM.trunk, MAT.trunk, PNum), fr = new THREE.InstancedMesh(PALM.frond, MAT.frond, PNum);
+  for (let i = 0; i < PNum; i++){ const s = 0.8 + rnd()*0.4; m4.compose(v.set(AX - 14 + i*5 + rnd()*2, 0, -14 - rnd()*12), q.setFromEuler(new THREE.Euler(0, rnd()*6, 0)), sc.set(s, s, s)); tr.setMatrixAt(i, m4); fr.setMatrixAt(i, m4); }
+  sc.set(1, 1, 1); scene.add(tr, fr);
+  // the crowd: villagers in madder red, indigo, turmeric yellow and plain cotton, cheering from the carts
+  const cSkin = MAT.skin.clone(), cCloth = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.9});
+  const dyes = [0xf1e8d6, 0xf1e8d6, 0xa3201d, 0x2c3f7a, 0xd9a21b, 0x2f6b3a, 0x7a2a52];
+  LO = true;
+  const variants = ['cheer', 'idle', 'namaskaram', 'cheer'].map(pose => { const r = makeRig({skin:cSkin, cloth:cCloth, sash:cCloth, hair:MAT.hair, metal:MAT.gold}); poseRig(r, {name:pose}); return bake(r.root); });
+  LO = false;
+  const spots = [];
+  for (let x = 1; x < 46; x += 0.85) for (const [z, y] of [[-3.6, 0.5], [-4.5, 0.5], [-5.5, 1.1], [-6.3, 1.1]]) if (!(z < -5 && x > 16.5 && x < 23.5)) spots.push([x + rnd()*0.3, y, z + rnd()*0.2]);
+  variants.forEach((vg, vi) => {
+    const mine = spots.filter((s, i) => i % variants.length === vi);
+    const meshes = vg.children.map(ch => { const im = new THREE.InstancedMesh(ch.geometry, ch.material, mine.length); im.castShadow = true; im.receiveShadow = true; return im; });
+    mine.forEach((s, j) => { const k = 0.9 + rnd()*0.15; m4.compose(v.set(AX + s[0], s[1], s[2]), q.setFromEuler(new THREE.Euler(0, (rnd() - 0.5)*0.8, 0)), sc.set(k, k, k));
+      for (const im of meshes){ im.setMatrixAt(j, m4); if (im.material === cCloth) im.setColorAt(j, col.setHex(dyes[Math.floor(rnd()*dyes.length)])); else if (im.material === cSkin) im.setColorAt(j, col.setScalar(0.8 + rnd()*0.4)); } });
+    const grp = new THREE.Group(); meshes.forEach(m => grp.add(m)); scene.add(grp); crowd.push({grp, ph:vi*1.7});
+  });
+  sc.set(1, 1, 1);
+  // named people
+  const silk = new THREE.MeshPhysicalMaterial({color:0xe2b64c, roughness:0.4, sheen:1, sheenColor:new THREE.Color(0xfff0b0)});
+  const indigo = new THREE.MeshStandardMaterial({color:0x2c3f7a, roughness:0.85}), white = new THREE.MeshStandardMaterial({color:0xefe6d2, roughness:0.9});
+  people.veeran = makePerson(white, {sash:MAT.sash}); people.veeran.root.position.set(AX + 22.8, 0, -2.0); people.veeran.root.rotation.y = 0.5; poseRig(people.veeran, {name:'idle'});
+  people.headman = makePerson(white); people.headman.root.position.set(AX + 40.6, 0, -2.0); people.headman.root.rotation.y = -0.6; poseRig(people.headman, {name:'cheer'});
+  people.aditya = makePerson(silk); people.aditya.root.position.set(AX + 20, 2.0, -5.6); poseRig(people.aditya, {name:'idle'});
+  people.drum = [0, 1].map(i => { const d = makePerson(indigo); d.root.position.set(AX + 30 + i*0.9, 0.5, -4.2); poseRig(d, {name:'drum'});
+    const dr = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 18), MAT.wood); dr.rotation.x = Math.PI/2; dr.position.set(0, 1.15, 0.28); d.root.add(dr); return d; });
+  for (const p of [people.veeran, people.headman, people.aditya, ...people.drum]) p.root.scale.setScalar(1.0);
+  BULLS.forEach(def => { const b = makeBull(def); b.root.visible = false; scene.add(b.root); bullRigs.push(b); });
+}
+
+function setBtnMode(mode){
+  const j = document.querySelector('.btn.jump'), c = document.querySelector('.btn.cut'), s = document.querySelector('.btn.step');
+  if (mode === 'jk'){ j.innerHTML = '<span>●</span>GRIP'; c.innerHTML = '<span>✦</span>SNATCH'; s.style.visibility = 'hidden'; }
+  else { j.innerHTML = '<span>▲</span>JUMP'; c.innerHTML = '<span>✕</span>CUT'; s.style.visibility = ''; }
+}
+function enterArena(){
+  buildArena(); inArena = true; jkScore = 0; jkNext = 0; jkTotalFirm = 0;
+  try { jkBest = +(localStorage.getItem('kanchi-jk-best') || 0); } catch(e){ jkBest = 0; }
+  SAVED.sunCol = sun.color.getHex(); SAVED.sunI = sun.intensity; SAVED.hemiC = hemi.color.getHex(); SAVED.hemiG = hemi.groundColor.getHex(); SAVED.fogC = scene.fog.color.getHex(); SAVED.fogD = scene.fog.density; SAVED.hemiI = hemi.intensity; hemi.intensity = 1.15;
+  sun.color.set(0xffd29c); sun.intensity = 3.4; hemi.color.set(0xa8b8dc); hemi.groundColor.set(0xc8945e); scene.fog.color.set(0xd8b48e); scene.fog.density = 0.0055;
+  skyMat.uniforms.sunDir.value.copy(SUN_JK); skyMat.uniforms.mem.value = 1; grade.uniforms.mem.value = 1;
+  setBtnMode('jk'); $('hud').classList.add('hide'); sHint.style.opacity = 0;
+  // young Ilan stands at the barricade, ready
+  ilan.root.scale.setScalar(0.95); ilan.tilt.rotation.set(0, 0, 0); ilan.tilt.position.set(0, 0, 0); ilan.lie = 0;
+  const fl = $('flash'); fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 60);
+  audio.sfx('roar');
+}
+function exitArena(){
+  if (!inArena) return; inArena = false; jk = null;
+  sun.color.setHex(SAVED.sunCol); sun.intensity = SAVED.sunI; hemi.color.setHex(SAVED.hemiC); hemi.groundColor.setHex(SAVED.hemiG); scene.fog.color.setHex(SAVED.fogC); scene.fog.density = SAVED.fogD; hemi.intensity = SAVED.hemiI;
+  skyMat.uniforms.sunDir.value.copy(TO_SUN); skyMat.uniforms.mem.value = 0; grade.uniforms.mem.value = 0;
+  setBtnMode('play'); ilan.root.scale.setScalar(1); ilan.tilt.rotation.set(0, 0, 0); $('jkhud').className = ''; $('jkring').style.opacity = 0;
+  for (const b of bullRigs) b.root.visible = false;
+}
+const JK_HINTS = {
+  wait:{tk:'GRIP', kk:'Space', btn:'jump', text:'Bull out of the gate! Tap Grip as the gold ring closes on his hump.'},
+  ride:{tk:'◀ ▶', kk:'A D', text:'Lean against the buck. Keep the needle in the centre.'},
+  beat:{tk:'GRIP', kk:'Space', btn:'jump', text:'Tap Grip each time his front hooves hit the ground. Miss the beat and your grip slips.'},
+  snatch:{tk:'SNATCH', kk:'J', btn:'cut', text:'He drops his head to throw you. Tap Snatch as it dips to take the cloth.'}
+};
+function jkHint(key){ if (jk.i === 0 || key === 'snatch' || key === 'wait'){ showObj(JK_HINTS[key]); } }
+function startBull(i){
+  const B = BULLS[i], keep = jk && jk.i === i ? jk : null;
+  jk = {i, phase:'wait', t:0, wait:(i === 2 ? 2.2 : 1.4) + Math.random()*1.2, bx:AX + 45.5, ph:0, b:0, g:1, dist:0, buckT:0, per:B.period, dir:1, beatN:-1, hit:new Set(), checked:-1,
+        tta:9, paused:0, firm:0, slips:0, grabQ:'', attempts:keep ? keep.attempts + 1 : 1, best:keep ? keep.best : 0, ix:ILAN_X, iy:0, ivx:0, ivy:0, ivz:0, iz:0, cloth:false, dip:0, snatchTry:false, msgT:0};
+  bullRigs.forEach((b, k) => { b.root.visible = k === i; b.cloth.visible = true; b.head.rotation.z = 0; });
+  $('jkhud').className = 'show'; $('jkhud').querySelector('.nm').textContent = `${B.name} · ${B.house}`;
+  jkHint('wait');
+}
+function jkFlash(text, good){ const f = $('jkflash'); f.textContent = text; f.className = good ? 'show good' : 'show bad'; clearTimeout(jkFlash.t); jkFlash.t = setTimeout(() => f.className = '', 650); }
+function jkThrow(msg){
+  const R = bullRigs[jk.i]; jk.phase = 'thrown'; jk.t = 0; jk.msg = msg;
+  jk.ix = jk.bx - 0.15; jk.iy = 0.85; jk.iz = 0; jk.ivx = -1.5; jk.ivy = 5; jk.ivz = (jk.b >= 0 ? 1 : -1)*3.4;
+  audio.sfx('death'); buzz(60); shakeT = 0.3; $('obj').className = ''; setHintBtn(null);
+}
+function jkFinish(success){
+  const B = BULLS[jk.i];
+  let pts = Math.round(jk.dist*25) + jk.firm*40;
+  if (success){ pts += jk.grabQ === 'Perfect' ? 500 : 250; if (jk.cloth) pts += 600; if (jk.slips === 0) pts += 300; }
+  jk.best = Math.max(jk.best, pts);
+  const lines = success
+    ? [`${B.name} held!`, `${jk.grabQ} grab · ${Math.min(jk.dist, B.dist).toFixed(0)} m · ${jk.firm} firm beats${jk.cloth ? ' · cloth taken' : ''}${jk.slips === 0 ? ' · never slipped' : ''}`, `${pts.toLocaleString()} points`]
+    : [jk.msg || 'Thrown!', `Held ${jk.dist.toFixed(1)} of ${B.dist} m.`, jk.attempts >= 3 ? 'The memory moves on. You held him, in the end.' : 'Veeran hauls you back over the barricade. Again.'];
+  const r = $('jkres'); r.querySelector('h3').textContent = lines[0]; r.querySelector('p').textContent = lines[1]; r.querySelector('small').textContent = lines[2]; r.className = 'show ' + (success ? 'good' : 'bad');
+  jk.phase = 'result'; jk.t = 0; jk.success = success || jk.attempts >= 3;
+  if (jk.success){ jkScore += jk.best; for (const c of crowd) c.jump = 1; audio.sfx(success ? 'collect' : 'chime'); }
+  $('obj').className = ''; setHintBtn(null);
+}
+function updateJK(dt){
+  if (!jk) return;
+  const B = BULLS[jk.i], R = bullRigs[jk.i]; jk.t += dt;
+  const ax = ((held.r ? 1 : 0) - (held.l ? 1 : 0)) || stickAx || padAx;
+  if (jk.phase === 'wait'){
+    if (jk.t > jk.wait){ jk.phase = 'charge'; jk.t = 0; audio.sfx('roar'); shakeT = 0.25; for (const c of crowd) c.jump = 0.6; }
+  } else if (jk.phase === 'charge' || jk.phase === 'miss'){
+    if (B.pause && jk.phase === 'charge' && !jk.paused && jk.bx < AX + 36){ jk.paused = 0.6 + Math.random()*0.6; audio.sfx('hoof'); }
+    if (jk.paused > 0){ jk.paused -= dt; if (jk.paused <= 0) jk.paused = -1; }
+    else { jk.bx -= B.speed*dt; R.ph += dt*B.speed*1.9; }
+    const humpX = jk.bx - 0.42;
+    jk.tta = jk.paused > 0 ? 9 : (humpX - ILAN_X)/B.speed;
+    if (jk.phase === 'charge'){
+      if (pressed.jump){
+        if (jk.tta > 0.26) jkThrow('Too early! He hooked you aside.');
+        else if (jk.tta >= -0.26){
+          jk.grabQ = Math.abs(jk.tta) < 0.11 ? 'Perfect' : 'Good'; jkFlash(jk.grabQ + ' grab!', true);
+          jk.phase = 'ride'; jk.t = 0; jk.buckT = 0; jk.per = B.period; jk.beatN = -1; audio.sfx('step'); hitStop = 0.08; buzz(25); for (const c of crowd) c.jump = 1;
+          jkHint('ride'); setTimeout(() => { if (jk && jk.phase === 'ride') jkHint('beat'); }, 2600);
+        }
+      }
+      if (jk.tta < -0.3){ jk.phase = 'miss'; jk.t = 0; jkFlash('Too late. He\'s past you.', false); }
+    } else if (jk.t > 1.4){ jk.msg = 'Missed him at the gate.'; jkFinish(false); }
+  } else if (jk.phase === 'ride'){
+    jk.bx -= B.rideV*dt; jk.dist += B.rideV*dt; R.ph += dt*5;
+    jk.buckT += dt; jk.since = (jk.since ?? 9) + dt;
+    if (jk.buckT >= jk.per){ jk.buckT -= jk.per; jk.beatN++; jk.since = 0; jk.per = B.period*(0.85 + Math.random()*0.3); jk.dir = Math.random() < 0.5 ? -1 : 1; audio.sfx('hoof'); shakeT = Math.max(shakeT, 0.06); }
+    const toNext = jk.per - jk.buckT, W = 0.17;
+    const win = toNext < W ? jk.beatN + 1 : (jk.since < W && jk.beatN >= 0 ? jk.beatN : -1);
+    jk.inWin = win >= 0;
+    if (pressed.jump){
+      if (win >= 0 && !jk.hit.has(win)){ jk.hit.add(win); jk.g = Math.min(1, jk.g + 0.25); jk.firm++; jkFlash('Firm!', true); audio.sfx('firm'); buzz(10); }
+      else { jk.g -= 0.05; jkFlash('Off the beat', false); }
+    }
+    if (jk.beatN >= 0 && jk.since >= W && jk.checked !== jk.beatN){ jk.checked = jk.beatN; if (!jk.hit.has(jk.beatN)){ jk.g -= 0.14; jk.slips++; jkFlash('Slipping!', false); } }
+    // the buck throws you one way; lean the other way
+    const u = jk.buckT/jk.per;
+    if (B.switchP && u > 0.3 && u < 0.32 && Math.random() < B.switchP) jk.dir *= -1;
+    const f = u < 0.6 ? jk.dir*B.force*Math.sin(u/0.6*Math.PI) : 0;
+    jk.b += (f + ax*2.5)*dt; jk.b *= Math.pow(0.4, dt);   // the needle shows where you're sliding; push the other way
+    jk.g -= 0.05*dt;
+    if (Math.abs(jk.b) > 1) jkThrow('Thrown! He bucked you off.');
+    else if (jk.g <= 0) jkThrow('Your grip gave out.');
+    else if (jk.dist >= B.dist){ jk.phase = 'snatch'; jk.t = 0; jk.dipAt = 0.6 + Math.random()*0.5; jkHint('snatch'); }
+  } else if (jk.phase === 'snatch'){
+    jk.bx -= B.rideV*0.4*dt; R.ph += dt*2;
+    jk.dip = Math.exp(-Math.pow((jk.t - jk.dipAt)/0.2, 2));
+    jk.b *= Math.pow(0.3, dt);
+    if (pressed.cut && !jk.snatchTry){ jk.snatchTry = true;
+      if (Math.abs(jk.t - jk.dipAt) < 0.24){ jk.cloth = true; R.cloth.visible = false; jkFlash('Cloth taken!', true); audio.sfx('collect'); hitStop = 0.08; buzz(30); }
+      else jkFlash('Missed the cloth', false); }
+    if (jk.t > jk.dipAt + 0.9){ jkFinish(true); }
+  } else if (jk.phase === 'thrown'){
+    jk.ivy -= G*dt; jk.ix += jk.ivx*dt; jk.iy += jk.ivy*dt; jk.iz += jk.ivz*dt; jk.bx -= B.rideV*dt; R.ph += dt*5;
+    if (jk.iy <= 0){ if (!jk.landed){ jk.landed = 1; emit(smokePS, jk.ix, 0.2, jk.iz, 18, [0.85, 0.7, 0.55, 0.6], {spd:1.6, life:1.2, size:0.8, grow:2.5, up:0.4}); audio.sfx('land'); }
+      jk.iy = 0; jk.ivx *= 0.8; jk.ivz *= 0.8; jk.ivy = 0; }
+    if (jk.t > 1.5) jkFinish(false);
+  } else if (jk.phase === 'result'){
+    if (jk.t > 3.0){
+      $('jkres').className = '';
+      if (!jk.success){ startBull(jk.i); return; }
+      if (jk.i < 2){ jkNext = jk.i + 1; $('jkhud').className = ''; startCut(JK_BETWEEN[jk.i], 'jk'); bullRigs[jk.i].root.visible = false; }
+      else {
+        if (jkScore > jkBest){ try { localStorage.setItem('kanchi-jk-best', String(jkScore)); } catch(e){} }
+        $('jkhud').className = ''; bullRigs[2].root.visible = false; startCut(JK_OUTRO, 'credits');
+      }
+    }
+  }
+  // the parai never stops
+  paraiT -= dt; if (paraiT <= 0){ paraiT = 0.2; paraiN++; audio.sfx(paraiN % 4 === 0 ? 'parai1' : 'parai2'); }
+}
+function animBull(R, run, buck){
+  const ph = R.ph;
+  R.legs.forEach((lg, k) => { const off = (lg.front ? 0 : Math.PI) + (k % 2)*0.6;
+    lg.L.rotation.z = run*Math.sin(ph + off)*0.65 + buck*(lg.front ? -0.5 : 0.25);
+    lg.K.rotation.z = -Math.max(0, Math.sin(ph + off + 1.2))*0.9*run - buck*(lg.front ? 0.8 : 0); });
+  R.tail.rotation.z = 0.3 + Math.sin(ph*1.3)*0.4;
+}
+function jkVisuals(dt){
+  nizhal.root.visible = false; ghost.root.visible = false; for (const g of laneGlows) g.visible = false;
+  for (const c of crowd){ c.jump = Math.max(0, (c.jump || 0) - dt*1.2); c.grp.position.y = Math.abs(Math.sin(time*(6 + c.jump*6) + c.ph))*(0.03 + c.jump*0.18); }
+  people.drum.forEach((d, i) => { d.sh[1].rotation.x = -1.6 + Math.sin(time*31 + i)*0.5; d.sh[0].rotation.x = -0.9 + Math.cos(time*31 + i)*0.4; });
+  if (Math.random() < dt*8){ const s = steamSpots[Math.floor(Math.random()*steamSpots.length)]; emit(smokePS, s[0], s[1], s[2], 1, [0.95, 0.93, 0.9, 0.25], {spd:0.15, life:2.2, size:0.35, grow:3, up:0.45, spread:0.1, spreadY:0.05}); }
+  let focusX = AX + 24;
+  ilan.root.visible = true; ilan.sword.visible = false;
+  if (jk && state === 'jk'){
+    const R = bullRigs[jk.i], B = BULLS[jk.i];
+    let by = 0, pitch = 0, roll = 0, buck = 0;
+    if (jk.phase === 'ride' || jk.phase === 'snatch'){ const u = jk.buckT/jk.per; by = Math.sin(u*Math.PI)*0.32*(jk.phase === 'ride' ? 1 : 0.3); pitch = Math.sin(u*Math.PI*2)*0.22; roll = jk.dir*Math.sin(Math.min(1, u/0.6)*Math.PI)*0.18; buck = Math.sin(u*Math.PI); animBull(R, 0.3, buck); }
+    else animBull(R, jk.phase === 'wait' || jk.paused > 0 ? 0 : 1, 0);
+    R.root.position.set(jk.bx, by, 0); R.body.rotation.set(roll, 0, pitch); R.head.rotation.z = -jk.dip*0.7 + (jk.phase === 'wait' ? Math.sin(time*3)*0.1 : 0);
+    if (jk.phase === 'wait'){ R.root.position.x = AX + 45.5 + Math.sin(time*7)*0.05; }
+    // Ilan
+    if (jk.phase === 'ride' || jk.phase === 'snatch'){
+      ilan.root.position.set(jk.bx - 0.1, by + 1.0, 0.2); faceRig(ilan, -1); poseRig(ilan, {name:'ride'});
+      ilan.tilt.rotation.z = jk.b*0.5 + roll; ilan.tilt.rotation.x = 0;
+      if (jk.phase === 'snatch' && jk.snatchTry) { ilan.sh[1].rotation.x = -2.4; }
+      focusX = jk.bx - 1.2;
+    } else if (jk.phase === 'thrown' || (jk.phase === 'result' && !jk.success)){
+      ilan.root.position.set(jk.ix, jk.iy, jk.iz); faceRig(ilan, -1); poseRig(ilan, {name:'air'}); ilan.tilt.rotation.z = 0; ilan.tilt.rotation.x = jk.iy > 0 ? jk.t*6 : Math.PI/2*0.95; focusX = jk.ix;
+    } else if (jk.phase === 'result'){
+      ilan.root.position.set(jk.bx - 1.6, 0, 0.9); faceRig(ilan, 1); ilan.tilt.rotation.set(0, 0, 0); poseRig(ilan, {name:'cheer'}); focusX = jk.bx;
+    } else {
+      ilan.root.position.set(ILAN_X, 0, 0); faceRig(ilan, 1); ilan.tilt.rotation.set(0, 0, 0); poseRig(ilan, {name:'ready', t:time});
+      focusX = jk.phase === 'wait' ? AX + 31 : (jk.bx + ILAN_X)/2;
+    }
+    // HUD: balance needle, grip, distance, timing ring
+    const hud = $('jkhud');
+    hud.querySelector('.needle').style.left = (50 + Math.max(-1, Math.min(1, jk.b))*48) + '%';
+    hud.querySelector('.bal').classList.toggle('warn', Math.abs(jk.b) > 0.65);
+    hud.querySelector('.grip i').style.width = Math.max(0, jk.g*100) + '%';
+    hud.querySelector('.dist').textContent = `${Math.min(jk.dist, B.dist).toFixed(1)} / ${B.dist} m`;
+    hud.querySelector('.sc').textContent = `${jkScore.toLocaleString()} pts`;
+    hud.classList.toggle('riding', jk.phase === 'ride' || jk.phase === 'snatch');
+    document.querySelector('.btn.jump').classList.toggle('beat', jk.phase === 'ride' && !!jk.inWin);
+    $('beatdot').classList.toggle('on', jk.phase === 'ride' && !!jk.inWin);
+    const ring = $('jkring');
+    if (jk.phase === 'charge' && jk.tta < 1.3 && jk.tta > -0.3){
+      const p = new THREE.Vector3(jk.bx - 0.42, 2.0, 0).project(camera);
+      ring.style.left = ((p.x*0.5 + 0.5)*innerWidth) + 'px'; ring.style.top = ((-p.y*0.5 + 0.5)*innerHeight) + 'px';
+      ring.style.transform = `translate(-50%,-50%) scale(${1 + Math.max(0, jk.tta)*2.4})`; ring.style.opacity = 1;
+      ring.classList.toggle('now', Math.abs(jk.tta) < 0.11);
+    } else ring.style.opacity = 0;
+  } else {
+    // cutscenes in the arena: young Ilan at the barricade, or after the last bull, at the arena's end with the prince
+    const out = cutLines === JK_OUTRO;
+    ilan.root.position.set(out ? AX + 2.8 : ILAN_X, 0, 0); faceRig(ilan, 1); ilan.tilt.rotation.set(0, 0, 0); poseRig(ilan, {name:'idle', t:time});
+    if (out){ people.aditya.root.position.set(AX + 4.2, 0, 0.1); people.aditya.root.rotation.y = -Math.PI/2; }
+    $('jkring').style.opacity = 0;
+  }
+  updatePS(glowPS, dt); updatePS(smokePS, dt);
+  if (state === 'jk'){
+    camLookT.set(focusX, 1.5, 0); camPosT.set(focusX + 0.4, 2.7, 8.6 + (innerWidth < innerHeight ? 6 : 0));
+  }
+  const k = state === 'cut' ? Math.min(1, dt*1.4) : Math.min(1, dt*5);
+  camPos.lerp(camPosT, k); camLook.lerp(camLookT, k);
+  shakeT = Math.max(0, shakeT - dt); const sh = shakeT > 0 ? shakeT*0.25 : 0;
+  camera.position.set(camPos.x + (Math.random() - .5)*sh, camPos.y + (Math.random() - .5)*sh, camPos.z); camera.lookAt(camLook);
+  if (camera.fov !== 38){ camera.fov = 38; camera.updateProjectionMatrix(); }
+  sky.position.copy(camera.position);
+  sun.target.position.set(camLook.x + 4, 0, -3); sun.position.copy(sun.target.position).addScaledVector(SUN_JK, 70);
+  grade.uniforms.time.value = time;
+}
+
+// =====================================================================
 // Audio: a low drone in the stopped city, and a few sounds made from filtered noise
 // =====================================================================
 const audio = {
@@ -1584,6 +2055,11 @@ const audio = {
     if (kind === 'burn') noise(0.7, 1800, 300, 0.6, 0.12);
     if (kind === 'rumble'){ noise(2.2, 120, 50, 0.7, 0.6, 'lowpass'); }
     if (kind === 'land') noise(0.09, 420, 160, 0.8, 0.12);
+    if (kind === 'roar'){ noise(1.8, 420, 900, 0.5, 0.22); noise(1.4, 200, 120, 0.7, 0.18, 'lowpass'); }
+    if (kind === 'hoof'){ tone(0.12, 110, 45, 0.25, 'triangle'); noise(0.08, 320, 120, 1, 0.12); }
+    if (kind === 'firm') tone(0.12, 880, 1180, 0.07);
+    if (kind === 'parai1'){ noise(0.09, 260, 130, 2.5, 0.2); tone(0.08, 150, 90, 0.1, 'triangle'); }
+    if (kind === 'parai2') noise(0.05, 950, 500, 3, 0.07);
     if (kind === 'fizzle') noise(0.18, 1400, 500, 1.2, 0.07);
     if (kind === 'chime'){ tone(0.35, 660, 660, 0.09); tone(0.5, 990, 990, 0.07); }
     if (kind === 'collect'){ tone(0.7, 523, 1568, 0.14, 'triangle'); tone(0.9, 784, 784, 0.06); noise(0.4, 6000, 9000, 1, 0.05, 'highpass'); }
@@ -1614,7 +2090,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 window.__kanchi = { get frames(){ return frames; }, get P(){ return P; }, get state(){ return state; }, get shadows(){ return shadows; }, get target(){ return target; }, get walkers(){ return walkers; },
-  advance, held, pressed, CANOPIES, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
+  advance, held, pressed, CANOPIES, get jk(){ return jk; }, get jkScore(){ return jkScore; }, toArena(){ $('title').classList.add('hide'); enterArena(); $('sub').className = ''; document.body.classList.remove('cine'); state = 'jk'; startBull(0); }, startBull(i){ startBull(i); }, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
   skipToPlay(){ $('title').classList.add('hide'); $('sub').className = ''; document.body.classList.remove('cine'); state = 'play'; $('hud').classList.remove('hide'); },
   place(x, y, face=1){ P.x = x; P.y = y; P.vx = P.vy = 0; P.face = face; camPos.set(x, y + 2.5, 13); camLook.set(x, y + 1, 0); camPosT.copy(camPos); camLookT.copy(camLook); } };
 
