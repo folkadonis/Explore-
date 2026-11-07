@@ -66,31 +66,63 @@ body.cine .bar{height:11vh}
 #loading{display:grid;place-items:center;background:var(--night);font-family:var(--display);letter-spacing:.2em;font-size:14px;color:#cbbfe6;transition:opacity .8s}
 #err{display:none;position:fixed;inset:auto 16px 16px 16px;background:#3a1020;padding:12px 16px;border-radius:8px;font-size:14px}
 .hide{opacity:0!important}
-#controls{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));pointer-events:none;transition:opacity .4s}
-body.cine #controls{opacity:.25}
-.pad{display:flex;gap:10px;align-items:flex-end;pointer-events:auto}
-.btn{width:62px;height:62px;border-radius:50%;border:1.5px solid rgba(203,191,230,.4);background:rgba(14,9,22,.42);
-  color:var(--ink);font:700 13px/1 var(--body);letter-spacing:.04em;display:grid;place-items:center;touch-action:none;backdrop-filter:blur(3px)}
-.btn.big{width:74px;height:74px}
-.btn.step{border-color:rgba(167,139,250,.85);color:#d8ccff}
-.btn.held{background:rgba(124,58,237,.5)}
-.right .btn:nth-child(2){margin-bottom:24px}
+#controls{position:fixed;inset:0;pointer-events:none;transition:opacity .4s}
+body.cine #controls{opacity:.15}
+#stickZone{position:absolute;left:0;bottom:0;width:46vw;height:80vh;pointer-events:auto;touch-action:none}
+#stickBase{position:absolute;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;border:1.5px solid rgba(203,191,230,.4);
+  background:radial-gradient(circle,rgba(14,9,22,.12),rgba(14,9,22,.45));transition:opacity .25s}
+#stickKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px;border-radius:50%;background:rgba(244,237,226,.22);
+  border:1.5px solid rgba(244,237,226,.7);box-shadow:0 2px 10px rgba(0,0,0,.4)}
+#stickZone.idle #stickBase{opacity:.5}
+#stickHint{position:absolute;left:0;width:128px;margin-left:-64px;text-align:center;font:700 12px var(--body);letter-spacing:.06em;color:#e7defa;text-shadow:0 1px 4px #000;transition:opacity .4s}
+#rpad{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:214px;height:196px}
+.btn{position:absolute;pointer-events:auto;border-radius:50%;border:1.5px solid rgba(203,191,230,.45);background:rgba(14,9,22,.42);color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;touch-action:none;backdrop-filter:blur(3px);
+  transition:transform .08s,background .15s,box-shadow .2s;font:700 11px/1 var(--body);letter-spacing:.08em;padding:0}
+.btn span{font-size:22px;line-height:1}
+.btn.jump{right:0;bottom:0;width:90px;height:90px}
+.btn.step{right:102px;bottom:4px;width:84px;height:84px;border-color:rgba(167,139,250,.9);color:#e2d8ff}
+.btn.cut{right:12px;bottom:104px;width:64px;height:64px}
+.btn.cut span{font-size:17px}
+.btn.held{transform:scale(.9);background:rgba(124,58,237,.5)}
+.btn.step.ready{background:rgba(124,58,237,.45);box-shadow:0 0 24px rgba(167,139,250,.8)}
+.btn.cut.ready{background:rgba(233,182,92,.32);border-color:var(--gold);box-shadow:0 0 18px rgba(233,182,92,.6)}
+.btn.hint::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2.5px solid var(--violet);animation:ring 1.1s infinite;pointer-events:none}
+.btn.cut.hint::after{border-color:var(--gold)}
+.btn.jump.hint::after{border-color:#f4ede2}
+@keyframes ring{0%{transform:scale(.92);opacity:1}100%{transform:scale(1.35);opacity:0}}
 @media (pointer:fine){#controls{display:none}}
+#obj{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translate(-50%,-6px);width:max-content;max-width:min(520px,calc(100vw - 32px));
+  display:flex;align-items:center;gap:12px;background:rgba(14,9,22,.82);border:1px solid rgba(167,139,250,.45);border-radius:12px;padding:9px 16px 9px 10px;
+  opacity:0;transition:opacity .3s,transform .3s,border-color .3s;pointer-events:none}
+#obj.show{opacity:1;transform:translate(-50%,0)}
+#obj.done{border-color:#86e3ad}
+#obj .ic{flex:none;min-width:36px;height:34px;padding:0 9px;border-radius:8px;display:grid;place-items:center;font:700 13px var(--body);letter-spacing:.04em;
+  background:rgba(167,139,250,.18);color:#e7defa;border:1px solid rgba(167,139,250,.6);white-space:nowrap}
+#obj.done .ic{background:rgba(134,227,173,.2);border-color:#86e3ad;color:#c9f5da}
+#obj p{margin:0;font-size:16px;line-height:1.3}
+#toast{top:calc(122px + env(safe-area-inset-top,0px))}
+#hudR{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#mem{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+#mem i{width:10px;height:10px;transform:rotate(45deg);background:var(--violet);box-shadow:0 0 8px var(--violet)}
+#mem.pop{animation:pop .5s}
+@keyframes pop{40%{transform:scale(1.25)}}
+#tm{opacity:.7;font-weight:400;margin-left:4px}
+.sp-MEM b{color:var(--violet)} .sp-MEM p{font-style:italic}
 @media (prefers-reduced-motion:reduce){#title .go{animation:none}}
 </style>
 </head>
 <body>
 <canvas id="c" aria-label="Shadows of Kanchi, Chapter 1 playable slice"></canvas>
-<div class="layer" id="hud"><div id="eye"><i></i><span id="eyeTxt">In the sun</span></div><div id="chap">I · The Coronation of Ash</div></div>
+<div class="layer" id="hud"><div id="eye"><i></i><span id="eyeTxt">In the sun</span></div><div id="hudR"><div id="chap">I · The Coronation of Ash</div><div id="mem"><i></i><span id="memN">0/8</span><span id="tm">0:00</span></div></div></div>
+<div id="obj"><span class="ic"></span><p></p></div>
 <div id="toast"><b></b><p></p></div>
 <div class="bar t"></div><div class="bar b"></div>
 <div id="sub"><b></b><p></p><small></small></div>
 <div class="layer" id="death"><p></p></div>
 <div class="layer" id="credits">
   <div class="k">END OF CHAPTER I</div><h2>The Coronation of Ash</h2>
-  <p id="stats"></p><p class="n">Next: The Drowned Stepwell</p><p id="again" style="opacity:.6;font-size:14px"></p>
+  <p id="stats"></p><p id="rank" class="n"></p><p class="n">Next: The Drowned Stepwell</p><p id="again" style="opacity:.6;font-size:14px"></p>
 </div>
 <div class="layer" id="title">
   <div class="k">VEL NADU · THE CORONATION MORNING</div>
@@ -102,14 +134,11 @@ body.cine #controls{opacity:.25}
 <div class="layer" id="loading">CARVING KANCHI…</div>
 <div id="err"></div>
 <div id="controls">
-  <div class="pad left">
-    <button class="btn" data-k="l" aria-label="Move left">◀</button>
-    <button class="btn" data-k="r" aria-label="Move right">▶</button>
-  </div>
-  <div class="pad right">
-    <button class="btn" data-k="cut" aria-label="Cut">Cut</button>
-    <button class="btn step" data-k="step" aria-label="Shadow Step">Step</button>
-    <button class="btn big" data-k="jump" aria-label="Jump">Jump</button>
+  <div id="stickZone" class="idle"><div id="stickBase"><div id="stickKnob"></div></div><span id="stickHint">DRAG TO RUN</span></div>
+  <div id="rpad">
+    <button class="btn cut" data-k="cut" aria-label="Cut"><span>✕</span>CUT</button>
+    <button class="btn step" data-k="step" aria-label="Shadow Step"><span>◆</span>STEP</button>
+    <button class="btn jump" data-k="jump" aria-label="Jump"><span>▲</span>JUMP</button>
   </div>
 </div>
 <script type="importmap">
@@ -132,7 +161,7 @@ window.addEventListener('error', e => { const el = $('err'); el.style.display = 
 // =====================================================================
 // Tuning. World units are metres. x runs along the lane, y is up, z points at the camera.
 // =====================================================================
-const RUN = 6.2, G = 28, JV = 9.2, STEP_R = 9.5, PH = 1.75, PHW = 0.25;
+const RUN = 6.2, G = 26, JV = 9.0, STEP_R = 9.5, PH = 1.75, PHW = 0.25;
 // Direction sunlight travels. Shadows lean +x and toward the camera (+z), so shade-casters sit behind the lane.
 const SUN_D = new THREE.Vector3(0.32, -1, 0.35).normalize();
 const TO_SUN = SUN_D.clone().negate();
@@ -171,17 +200,42 @@ const CHECKPOINTS = [
 ];
 const K_ = (t, k) => TOUCH ? t : k;
 const TRIGGERS = [
-  {x:3,   lines:[['HINT', K_('Move with ◀ ▶. Jump with Jump.', 'Move with A/D or ← →. Jump with Space.')]]},
-  {x:40,  lines:[['NIZHAL','Too far to jump. Not too far for me.'],
-                 ['HINT', K_('Step pulls you into a shadow ahead. You land where the violet ghost stands.','Shadow Step: K or Shift. You land where the violet ghost stands.')]]},
+  {x:40,  lines:[['NIZHAL','Too far to jump. Not too far for me.']]},
   {x:63,  lines:[['VO','The temple elephants led the procession. Their bells stopped mid-swing.'],['NIZHAL','Big animals. Big shade.']]},
   {x:85,  lines:[['NIZHAL','Every shadow in Kanchi went somewhere. Mine just stayed.']]},
-  {x:97,  lines:[['HINT','The blast set the banner swinging. Its shadow swings with it. Time your Step.']]},
-  {x:109, lines:[['NIZHAL','No shade out there.'],['ILAN','Then I\'ll make some.'],
-                 ['HINT', K_('Stand by the rope post and press Cut.','Stand by the rope post and press J to cut it.')]]},
+  {x:109, lines:[['NIZHAL','No shade out there.'],['ILAN','Then I\'ll make some.']]},
   {x:135, lines:[['VO','The feast was still laid out. Steam hung over the rice like glass.']]},
-  {x:146, lines:[['NIZHAL','Ilan. The dark is moving.'],['NIZHAL','Run. Get to the sun.']], spawn:1},
+  {x:146, lines:[['NIZHAL','Ilan. The dark is moving.']], spawn:1},
   {x:168.5,lines:[['VO','They followed me to the doorway. The light took them there.']]}
+];
+// Guided tutorial: one objective at a time. Each stays on screen until the player does it.
+// tk/kk = the button or key shown in the card on touch/keyboard. btn = which touch button pulses.
+const OBJ = [
+  {at:-99, tk:'◀ ▶', kk:'A D', text:K_('Drag anywhere on the left side of the screen to run.','Hold D or → to run.'), done:() => P.x > 6},
+  {at:7, tk:'JUMP', kk:'Space', btn:'jump', text:'Jump onto the stone step.', done:() => P.ground && P.y > 1.1},
+  {tk:'HOLD', kk:'Hold Space', btn:'jump', text:'Hold Jump to jump higher, onto the next step.', done:() => P.ground && P.y > 2.3},
+  {at:22, tk:'JUMP', kk:'Space', btn:'jump', text:'Run and jump across the gap.', done:() => P.x > 33.4 && P.ground},
+  {at:39, tk:'STEP', kk:'K', btn:'step', text:K_('Too far to jump. Tap Step to teleport into the shade where the violet ghost stands.','Too far to jump. Press K to Shadow Step into the shade where the violet ghost stands.'), done:() => P.x > 50.5 && P.ground},
+  {tk:'i', kk:'i', text:'You can only Step into shade. A violet glow on the ground marks shade in reach.', info:5},
+  {at:62, tk:'STEP', kk:'K', btn:'step', text:'Step from shade to shade under the elephants.', done:() => P.x > 77.6 && P.ground},
+  {at:84, tk:'▲ + ◆', kk:'Space, K', btn:'step', text:'You can Step in mid-air. Jump first, then Step, to save a fall.', done:() => P.x > 88.6 && P.ground},
+  {at:95.5, tk:'STEP', kk:'K', btn:'step', text:'The banner\'s shadow swings. Wait for the ghost, then Step.', done:() => P.x > 103 && P.ground},
+  {at:108.5, tk:'CUT', kk:'J', btn:'cut', text:K_('No shade ahead. Stand by the rope post and tap Cut.','No shade ahead. Stand by the rope post and press J.'), done:() => !!CANOPIES[0].cut},
+  {tk:'STEP', kk:'K', btn:'step', text:'The canopy made shade. Step into it.', done:() => P.x > 119.5 && P.ground},
+  {tk:'CUT', kk:'J', btn:'cut', text:'Cut the next rope, then Step across.', done:() => P.x > 133.5 && P.ground},
+  {at:146, tk:'CUT', kk:'J', btn:'cut', text:'Run! Cut knocks shadows back. Knock one into sunlight and it burns.', done:() => P.x > 167.3},
+  {at:169, tk:'▶', kk:'D', text:'Go to the prince.', done:() => false}
+];
+// Shadow-memories: optional pickups. Several sit mid-air over gaps, so you grab them in a jump and Step to safety.
+const MEMS = [
+  {x:15.5, y:4.4, name:'Sengan, stone-carver', line:'He cut a crescent and a dot into every block he set.'},
+  {x:31.6, y:2.3, name:'Malar, 9, flower-seller', line:'She was saving for a bronze bell.'},
+  {x:61.4, y:0.95, name:'Veeran, guard captain', line:'He kept boys in the back row. He knew every one of their names.'},
+  {x:75.2, y:2.4, name:'Ponni, bell-caster', line:'She cast the coronation bell. She never heard it ring.'},
+  {x:94.6, y:3.3, name:'Arivu, star-reader', line:'She named a comet after her mother.'},
+  {x:99.2, y:2.8, name:'Vel, water-carrier', line:'Three hundred steps a day, for forty years.'},
+  {x:129.9, y:2.2, name:'Kannan, thavil drummer', line:'He played at nine coronations.'},
+  {x:163.5, y:0.95, name:'Selvi, cook', line:'She made the payasam for the feast. It is still warm.'}
 ];
 const DEATH_LINES = ['Wait. I\'m telling it wrong.', 'I\'d never fall for that.', 'Ask anyone. I didn\'t fall.', 'Let me tell that part again.'];
 
@@ -209,20 +263,21 @@ const ENDING = [
 // =====================================================================
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:false, powerPreference:'high-performance'});
-const DPR = Math.min(devicePixelRatio || 1, TOUCH ? 1.5 : 2);
+const DPR = Math.min(devicePixelRatio || 1, TOUCH ? 1.25 : 2);
+let curDPR = DPR;
 renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = TOUCH ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0xc08a68, 0.0075);
 const camera = new THREE.PerspectiveCamera(38, innerWidth/innerHeight, 0.1, 1200);
 
-const rt = new THREE.WebGLRenderTarget(innerWidth*DPR, innerHeight*DPR, {type:THREE.HalfFloatType, samples: TOUCH ? 2 : 4});
+const rt = new THREE.WebGLRenderTarget(innerWidth*DPR, innerHeight*DPR, {type:THREE.HalfFloatType, samples: TOUCH ? 0 : 4});
 const composer = new EffectComposer(renderer, rt);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.35, 0.6, 0.92);
@@ -1043,6 +1098,15 @@ function buildWorld(){
   scene.environment = pm.fromScene(envScene, 0.02).texture;
 }
 
+// ---------- shadow-memory pickups ----------
+function buildMemories(){
+  const tex = softDot();
+  for (const m of MEMS){
+    const g = new THREE.Group(), core = new THREE.Mesh(new THREE.OctahedronGeometry(0.12), MAT.eyeV); g.add(core);
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, color:new THREE.Color(1.1, 0.75, 2.4), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+    halo.scale.set(1.1, 1.1, 1); g.add(halo); g.position.set(m.x, m.y, 0); scene.add(g); memMeshes.push({g, core, m, got:0});
+  }
+}
 // ---------- particles (one draw call per system) ----------
 const psVert = `attribute float aSize; attribute vec4 aCol; varying vec4 vCol; uniform float uScale;
   void main(){ vCol = aCol; vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = aSize*uScale/-mv.z; gl_Position = projectionMatrix*mv; }`;
@@ -1100,11 +1164,13 @@ function updateDust(dt){
 let state = 'loading', cutLines = null, cutI = 0, cutT = 0, cutThen = null;
 let P, walkers = [], shadows = [], target = null, time = 0, deaths = 0, playTime = 0, cpIdx = 0, hallSpawned = false;
 let toastQ = [], toastCur = null, deathT = -1, creditsT = 0, debris = [], debrisT = 0, wakeAnim = 0;
+let objI = 0, objOn = false, objT = 0, objCool = 0, memCount = 0, memMeshes = [], hitStop = 0, fovKick = 0, lastNoShade = -99;
 const camPos = new THREE.Vector3(9, 1.2, 17), camLook = new THREE.Vector3(-4, 34, -26);
 const camPosT = camPos.clone(), camLookT = camLook.clone();
 
 function resetPlayer(cp){
-  P = {x:cp.sx, y:cp.sy, vx:0, vy:0, face:1, ground:1, coy:0, jbuf:0, stepCd:0, atk:0, atkCd:0, phase:0, alive:1, nzx:cp.sx - 0.8, nzy:cp.sy, stepFx:0};
+  P = {x:cp.sx, y:cp.sy, vx:0, vy:0, face:1, ground:1, coy:0, jbuf:0, sbuf:0, sArmed:0, jumping:0, stepCd:0, atk:0, atkCd:0, phase:0, alive:1, fell:0,
+       nzx:cp.sx - 0.8, nzy:cp.sy, stepFx:0, squash:0, safe:{x:cp.sx, y:cp.sy}};
 }
 function makeWalkers(){ return [150, 156, 161].map(x => ({x, y:0, hp:2, alive:1, active:0, wake:9, spd:2.0, kv:0, burn:0, ph:Math.random()*6})); }
 function spawnChasers(){ for (const x of [141.6, 142.3, 143.0]) walkers.push({x, y:0, hp:2, alive:1, active:1, wake:999, spd:3.7, kv:0, burn:0, ph:Math.random()*6}); }
@@ -1112,33 +1178,100 @@ function newGame(){
   for (const t of TRIGGERS) t.done = 0;
   for (const c of CANOPIES){ c.cut = 0; c.t = 0; }
   cpIdx = 0; deaths = 0; playTime = 0; hallSpawned = false; walkers = makeWalkers(); debris.forEach(d => scene.remove(d.m)); debris = [];
+  objI = 0; objOn = false; objCool = 0; $('obj').className = ''; setHintBtn(null);
+  memCount = 0; for (const mm of memMeshes){ mm.got = 0; mm.g.visible = true; } $('memN').textContent = `0/${MEMS.length}`;
   resetPlayer(CHECKPOINTS[0]);
 }
 
-// ---------- input ----------
+// ---------- input: keyboard, touch stick and buttons, gamepad ----------
 const held = {l:0, r:0, jump:0, step:0, cut:0}, pressed = {};
+let stickAx = 0, padAx = 0;
 const KEYMAP = {ArrowLeft:'l', KeyA:'l', ArrowRight:'r', KeyD:'r', ArrowUp:'jump', KeyW:'jump', Space:'jump',
-  KeyK:'step', ShiftLeft:'step', ShiftRight:'step', KeyL:'step', KeyJ:'cut', KeyX:'cut'};
+  KeyK:'step', ShiftLeft:'step', ShiftRight:'step', KeyL:'step', KeyE:'step', KeyJ:'cut', KeyX:'cut', KeyF:'cut'};
+const press = k => { if (!held[k]) pressed[k] = 1; held[k] = 1; };
+const buzz = ms => { try { if (TOUCH && navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
 addEventListener('keydown', e => {
+  const k = KEYMAP[e.code];
+  if (e.repeat){ if (k) e.preventDefault(); return; }
   if (e.code === 'Enter' || e.code === 'Space') advance();
-  const k = KEYMAP[e.code]; if (!k) return; e.preventDefault();
-  if (!held[k]) pressed[k] = 1; held[k] = 1;
+  if (!k) return; e.preventDefault(); press(k);
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) held[k] = 0; });
+// Touch buttons capture their finger, so sliding a little off the button never drops the press.
 for (const b of document.querySelectorAll('.btn')){
   const k = b.dataset.k;
-  const on = e => { e.preventDefault(); e.stopPropagation(); if (!held[k]) pressed[k] = 1; held[k] = 1; b.classList.add('held'); if (k === 'jump') advance(); };
-  const off = e => { e.preventDefault(); held[k] = 0; b.classList.remove('held'); };
-  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+  b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture(e.pointerId); } catch(err){}
+    press(k); b.classList.add('held'); buzz(8); if (state !== 'play') advance(); });
+  const off = () => { held[k] = 0; b.classList.remove('held'); };
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, off);
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
-canvas.addEventListener('pointerdown', e => { e.preventDefault(); advance(); });
+// Floating thumbstick: touch anywhere on the left side; the stick appears under your thumb.
+const zone = $('stickZone'), base = $('stickBase'), knob = $('stickKnob'), sHint = $('stickHint');
+let stickId = null, sx0 = 0, sy0 = 0, bx = 0, by = 0;
+const STICK_R = 44;
+function placeBase(x, y){ bx = x; by = y; base.style.left = x + 'px'; base.style.top = y + 'px'; sHint.style.top = (y - 92) + 'px'; sHint.style.left = x + 'px'; }
+function homeStick(){ const r = zone.getBoundingClientRect(); placeBase(Math.min(r.width*0.42, 120), r.height - 96); knob.style.transform = ''; zone.classList.add('idle'); }
+function moveStick(e){
+  let dx = e.clientX - sx0;
+  if (Math.abs(dx) > STICK_R){ const over = dx - Math.sign(dx)*STICK_R; sx0 += over; placeBase(bx + over, by); dx = Math.sign(dx)*STICK_R; } // base follows the thumb
+  const dy = Math.max(-STICK_R, Math.min(STICK_R, e.clientY - sy0));
+  knob.style.transform = `translate(${dx}px, ${dy*0.35}px)`;
+  const a = dx/STICK_R; stickAx = Math.abs(a) < 0.2 ? 0 : Math.sign(a)*Math.min(1, (Math.abs(a) - 0.2)/0.55);
+}
+zone.addEventListener('pointerdown', e => {
+  e.preventDefault(); audio.start();
+  if (state !== 'play'){ advance(); return; }
+  if (stickId !== null) return;
+  stickId = e.pointerId; try { zone.setPointerCapture(e.pointerId); } catch(err){}
+  const r = zone.getBoundingClientRect(); sx0 = e.clientX; sy0 = e.clientY; placeBase(e.clientX - r.left, e.clientY - r.top);
+  zone.classList.remove('idle'); moveStick(e);
+});
+zone.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
+const endStick = e => { if (e.pointerId !== stickId) return; stickId = null; stickAx = 0; homeStick(); };
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) zone.addEventListener(ev, endStick);
+addEventListener('resize', () => { if (stickId === null) homeStick(); });
+homeStick();
+// Gamepad: left stick or d-pad to move, A jump, X/RB/RT Step, B/Y Cut, Start to continue.
+let padPrev = {};
+function pollPad(){
+  const gps = navigator.getGamepads ? navigator.getGamepads() : []; let gp = null;
+  for (const g of gps) if (g){ gp = g; break; }
+  if (!gp){ padAx = 0; return; }
+  const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+  let ax = gp.axes[0] || 0; if (Math.abs(ax) < 0.22) ax = 0; if (b(14)) ax = -1; if (b(15)) ax = 1; padAx = ax;
+  const now = {jump:b(0), step:b(2) || b(5) || b(7), cut:b(1) || b(3), start:b(9)};
+  for (const k of ['jump', 'step', 'cut']){ if (now[k] && !padPrev[k]){ press(k); if (state !== 'play') advance(); } else if (!now[k] && padPrev[k]) held[k] = 0; }
+  if (now.start && !padPrev.start) advance();
+  padPrev = now;
+}
+canvas.addEventListener('pointerdown', e => { e.preventDefault(); if (state !== 'play') advance(); });
 for (const id of ['title', 'credits', 'death']) $(id).addEventListener('pointerdown', () => advance());
-addEventListener('blur', () => { for (const k in held) held[k] = 0; });
+addEventListener('blur', () => { for (const k in held) held[k] = 0; stickAx = 0; });
 $('go').textContent = TOUCH ? 'Tap to begin' : 'Press Enter to begin';
-$('keys').textContent = TOUCH ? 'Best played with your phone turned sideways' : 'Move A/D · Jump Space · Shadow Step K · Cut J';
+$('keys').textContent = TOUCH ? 'Best played with your phone turned sideways' : 'Move A/D · Jump Space · Shadow Step K · Cut J · Gamepad supported';
 
-function startCut(lines, then){ toastQ = []; toastCur = null; $('toast').classList.remove('show'); state = 'cut'; cutLines = lines; cutI = 0; cutT = 0; cutThen = then; document.body.classList.add('cine'); showSub(); }
+// ---------- tutorial objectives ----------
+function setHintBtn(k){ for (const b of document.querySelectorAll('.btn')) b.classList.toggle('hint', b.dataset.k === k); }
+function showObj(o){ const el = $('obj'); el.className = 'show'; el.querySelector('.ic').textContent = TOUCH ? o.tk : o.kk; el.querySelector('p').textContent = o.text; setHintBtn(o.btn || null); }
+function completeObj(o){
+  objOn = false; objI++; objCool = 0.9;
+  const el = $('obj'); el.classList.add('done'); el.querySelector('.ic').textContent = '✓'; setHintBtn(null);
+  if (!o.info){ audio.sfx('chime'); buzz(15); }
+}
+function updateObjectives(dt){
+  if (objCool > 0){ objCool -= dt; if (objCool <= 0 && !objOn) $('obj').classList.remove('show'); return; }
+  if (objI >= OBJ.length) return;
+  const o = OBJ[objI];
+  if (!objOn){ if (o.at === undefined || P.x >= o.at){ objOn = true; objT = 0; showObj(o); } else return; }
+  objT += dt;
+  if (objI === 0) sHint.style.opacity = 1;
+  const next = OBJ.slice(objI + 1).find(n => n.at !== undefined);
+  const skipped = next && P.x >= next.at + 2;   // the player got past it another way
+  if ((o.info ? objT > o.info : o.done()) || skipped){ completeObj(o); if (objI === 1) sHint.style.opacity = 0; }
+}
+
+function startCut(lines, then){ toastQ = []; toastCur = null; $('toast').classList.remove('show'); $('obj').className = ''; setHintBtn(null); stickAx = 0; state = 'cut'; cutLines = lines; cutI = 0; cutT = 0; cutThen = then; document.body.classList.add('cine'); showSub(); }
 function showSub(){
   const L = cutLines[cutI], s = $('sub');
   s.className = 'show sp-' + L.sp;
@@ -1160,9 +1293,16 @@ function advance(){
   }
   if (state === 'credits' && creditsT > 1.6){ $('credits').classList.remove('show'); newGame(); state = 'cut'; startCut(INTRO.slice(5), 'play'); }
 }
+const fmtT = t => `${Math.floor(t/60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 function showCredits(){
-  const m = Math.floor(playTime/60), s = String(Math.floor(playTime % 60)).padStart(2, '0');
-  $('stats').textContent = `Time ${m}:${s} · Retold ${deaths} ${deaths === 1 ? 'time' : 'times'}`;
+  let best = null; try { best = JSON.parse(localStorage.getItem('kanchi-best') || 'null'); } catch(e){}
+  const isBest = !best || playTime < best.time;
+  if (isBest) try { localStorage.setItem('kanchi-best', JSON.stringify({time:playTime, mem:memCount, deaths})); } catch(e){}
+  $('stats').textContent = `Time ${fmtT(playTime)} · Shadow-memories ${memCount}/${MEMS.length} · Retold ${deaths} ${deaths === 1 ? 'time' : 'times'}`;
+  let rank = isBest ? (best ? `New best time. Your last best was ${fmtT(best.time)}.` : 'First run recorded. Beat this time.') : `Your best time is ${fmtT(best.time)}.`;
+  if (deaths === 0 && memCount === MEMS.length) rank = 'Every memory found, and told without a single mistake. ' + rank;
+  else if (memCount < MEMS.length) rank += ` ${MEMS.length - memCount} shadow-memories are still out there.`;
+  $('rank').textContent = rank;
   $('again').textContent = TOUCH ? 'Tap to play again' : 'Enter to play again';
   $('credits').classList.add('show');
 }
@@ -1171,7 +1311,15 @@ function say(sp, text){ toastQ.push({sp, text, dur:Math.max(2.8, text.length*0.0
 // ---------- physics ----------
 const SOLIDS = PL.map(p => ({x0:p.x0, x1:p.x1, y0:p.bottom, y1:p.top}));
 const hits = s => P.x + PHW > s.x0 && P.x - PHW < s.x1 && P.y + PH > s.y0 && P.y < s.y1;
-function moveX(dx){ P.x += dx; for (const s of SOLIDS) if (hits(s)){ P.x = dx > 0 ? s.x0 - PHW - 1e-4 : s.x1 + PHW + 1e-4; P.vx = 0; } }
+function moveX(dx){
+  P.x += dx;
+  for (const s of SOLIDS) if (hits(s)){
+    const rise = s.y1 - P.y;
+    // Ledge assist: low steps are walked up, and a ledge you nearly made in a jump is climbed onto.
+    if (rise > 0 && rise <= (P.ground ? 0.4 : 0.8) && P.vy < 5){ P.y = s.y1; P.vy = 0; P.ground = 1; P.squash = 0.12; continue; }
+    P.x = dx > 0 ? s.x0 - PHW - 1e-4 : s.x1 + PHW + 1e-4; P.vx = 0;
+  }
+}
 function moveY(dy){ P.y += dy; P.ground = 0; for (const s of SOLIDS) if (hits(s)){ if (dy < 0){ P.y = s.y1; P.ground = 1; } else P.y = s.y0 - PH; P.vy = 0; } }
 function findTarget(){
   let best = null, bd = -1;
@@ -1186,28 +1334,37 @@ function findTarget(){
   }
   return best;
 }
-function die(){
-  if (!P.alive) return; P.alive = 0; deaths++; deathT = 0; audio.sfx('death');
+function die(fell){
+  if (!P.alive) return; P.alive = 0; P.fell = fell ? 1 : 0; deaths++; deathT = 0; audio.sfx('death'); buzz(fell ? 30 : 60);
   emit(glowPS, P.x, P.y + 0.9, 0, 60, [0.6, 0.4, 1.4, 1], {spd:3, life:1.1, size:0.25});
   const d = $('death'); d.querySelector('p').textContent = '“' + DEATH_LINES[(deaths - 1) % DEATH_LINES.length] + '”'; d.classList.add('show');
 }
 function respawn(){
-  resetPlayer(CHECKPOINTS[cpIdx]); walkers = makeWalkers(); hallSpawned = false;
-  for (const t of TRIGGERS) if (t.spawn) t.done = 0;
+  if (P.fell){ const safe = P.safe; resetPlayer({sx:safe.x, sy:safe.y}); }   // a fall puts you back at the edge you jumped from
+  else { resetPlayer(CHECKPOINTS[cpIdx]); walkers = makeWalkers(); hallSpawned = false; for (const t of TRIGGERS) if (t.spawn) t.done = 0; }
+  emit(glowPS, P.x, P.y + 0.9, 0, 30, [0.6, 0.4, 1.4, 1], {spd:1.6, life:0.6, size:0.2});
   $('death').classList.remove('show'); deathT = -1;
 }
+function platUnder(){ for (const p of PL) if (!p.wall && P.x >= p.x0 && P.x <= p.x1 && Math.abs(P.y - p.top) < 0.02) return p; return null; }
 
 function update(dt){
   time += dt;
   for (const c of CANOPIES) if (c.cut) c.t += dt/1.1;
-  shadows = computeShadows(P.x - 14, P.x + 16, time);
   if (state === 'play'){
     playTime += dt;
-    if (P.alive) updatePlayer(dt); else if ((deathT += dt) > 1.6) respawn();
+    if (P.alive) updatePlayer(dt); else if ((deathT += dt) > (P.fell ? 0.85 : 1.3)) respawn();
     updateWalkers(dt);
+    updateObjectives(dt);
     for (const t of TRIGGERS) if (!t.done && P.x >= t.x && P.alive){ t.done = 1; for (const [sp, tx] of t.lines) say(sp, tx);
       if (t.spawn && !hallSpawned){ hallSpawned = true; spawnChasers(); shakeT = 0.6; audio.sfx('rumble'); } }
     if (P.ground && P.alive) for (let i = CHECKPOINTS.length - 1; i > cpIdx; i--) if (P.x >= CHECKPOINTS[i].x){ cpIdx = i; break; }
+    if (P.alive) for (const mm of memMeshes){ if (mm.got) continue;
+      const dx = P.x - mm.m.x, dy = P.y + 0.9 - mm.m.y;
+      if (dx*dx + dy*dy < 0.85*0.85){ mm.got = 1; mm.g.visible = false; memCount++; audio.sfx('collect'); buzz(20); hitStop = 0.05;
+        emit(glowPS, mm.m.x, mm.m.y, 0, 50, [0.8, 0.6, 1.8, 1], {spd:2.4, life:0.8, size:0.2});
+        const el = $('mem'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); $('memN').textContent = `${memCount}/${MEMS.length}`;
+        if (memCount === 1) say('HINT', `Shadow-memories: ${MEMS.length} are hidden along the way. Some hang over gaps; grab them in a jump, then Step to safety.`);
+        say('MEM', `${mm.m.name}. ${mm.m.line}`); } }
     if (hallSpawned && P.x > HALL.x0 && P.x < HALL.x1 - 2){ debrisT -= dt;
       if (debrisT <= 0){ debrisT = 0.35 + Math.random()*0.4; const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2 + Math.random()*0.25), MAT.mason);
         m.castShadow = true; m.position.set(P.x + 2 + Math.random()*7, HALL.y0 - 0.3, -0.5 - Math.random()*2.5); scene.add(m); debris.push({m, vy:0, spin:Math.random()*6}); } }
@@ -1222,49 +1379,66 @@ function update(dt){
   for (const d of debris){ d.vy -= G*0.7*dt; d.m.position.y += d.vy*dt; d.m.rotation.x += d.spin*dt;
     if (d.m.position.y < 0.15 && !d.dead){ d.dead = 1; emit(smokePS, d.m.position.x, 0.2, d.m.position.z, 10, [0.55, 0.42, 0.34, 0.5], {spd:1.5, life:1.2, size:0.9, grow:2.5, up:0.4}); scene.remove(d.m); shakeT = Math.max(shakeT, 0.12); } }
   debris = debris.filter(d => !d.dead);
-  // toasts
+  // story lines (separate from the tutorial card)
   if (!toastCur && toastQ.length){ toastCur = Object.assign(toastQ.shift(), {t:0}); const el = $('toast'); el.className = 'show sp-' + toastCur.sp;
-    el.querySelector('b').textContent = toastCur.sp === 'HINT' ? '' : (toastCur.sp === 'VO' ? 'ILAN' : toastCur.sp); el.querySelector('p').textContent = toastCur.text;
-    el.querySelector('b').style.display = toastCur.sp === 'HINT' ? 'none' : 'block'; }
+    const label = {HINT:'', VO:'ILAN', MEM:'SHADOW-MEMORY'}[toastCur.sp] ?? toastCur.sp;
+    el.querySelector('b').textContent = label; el.querySelector('p').textContent = toastCur.text; el.querySelector('b').style.display = label ? 'block' : 'none'; }
   if (toastCur && (toastCur.t += dt) > toastCur.dur){ toastCur = null; $('toast').classList.remove('show'); }
   for (const k in pressed) delete pressed[k];
 }
 let shakeT = 0;
+function doStep(){
+  emit(glowPS, P.x, P.y + 0.9, 0, 50, [0.5, 0.3, 1.3, 1], {spd:2.2, life:0.6, size:0.22});
+  emit(smokePS, P.x, P.y + 0.9, 0, 18, [0.05, 0.03, 0.1, 0.7], {spd:1.2, life:0.9, size:0.7, grow:2});
+  P.x = target.x; P.y = target.y; P.vy = 0; P.vx *= 0.4; P.ground = 1; P.coy = 0.12; P.jumping = 0;
+  P.stepCd = 0.4; P.stepFx = 0.35; P.nzx = P.x - 0.8*P.face; P.nzy = P.y; P.squash = 0.12;
+  emit(glowPS, P.x, P.y + 0.9, 0, 60, [0.75, 0.55, 1.6, 1], {spd:2.6, life:0.7, size:0.24});
+  audio.sfx('step'); buzz(12); hitStop = 0.06; fovKick = 3;
+  target = null;
+}
 function updatePlayer(dt){
-  const ax = (held.r ? 1 : 0) - (held.l ? 1 : 0);
-  if (ax) P.face = ax;
-  P.vx += (ax*RUN - P.vx)*Math.min(1, dt*(P.ground ? 14 : 6));
-  P.coy = P.ground ? 0.1 : P.coy - dt;
-  P.jbuf = pressed.jump ? 0.12 : P.jbuf - dt;
-  if (P.jbuf > 0 && P.coy > 0){ P.vy = JV; P.coy = 0; P.jbuf = 0; P.ground = 0; audio.sfx('jump'); }
-  P.vy -= G*dt*(!held.jump && P.vy > 0 ? 2.1 : 1); P.vy = Math.max(P.vy, -30);
-  const wasAir = !P.ground;
+  const kb = (held.r ? 1 : 0) - (held.l ? 1 : 0);
+  const ax = kb || stickAx || padAx;
+  if (Math.abs(ax) > 0.05) P.face = Math.sign(ax);
+  // quick to start, quick to stop, a little less grip in the air
+  P.vx += (ax*RUN - P.vx)*Math.min(1, dt*(P.ground ? 18 : 10));
+  P.coy = P.ground ? 0.12 : P.coy - dt;
+  P.jbuf = pressed.jump ? 0.15 : P.jbuf - dt;
+  if (P.jbuf > 0 && P.coy > 0){ P.vy = JV; P.coy = 0; P.jbuf = 0; P.ground = 0; P.jumping = 1; audio.sfx('jump');
+    emit(smokePS, P.x, P.y + 0.05, 0, 4, [0.7, 0.58, 0.48, 0.3], {spd:0.8, life:0.6, size:0.4, grow:2, spreadY:0.05}); }
+  if (P.jumping && !held.jump && P.vy > 3.2){ P.vy = 3.2; P.jumping = 0; }   // short tap = short hop
+  let g = G; if (P.vy < 0) g *= 1.45; else if (held.jump && P.vy < 1.4) g *= 0.6;   // snappy fall, a moment of hang at the top
+  P.vy -= g*dt; P.vy = Math.max(P.vy, -24);
+  const wasAir = !P.ground, vy0 = P.vy;
   moveX(P.vx*dt); moveY(P.vy*dt);
-  if (wasAir && P.ground) emit(smokePS, P.x, P.y + 0.05, 0, 6, [0.7, 0.58, 0.48, 0.35], {spd:1, life:0.8, size:0.5, grow:2, spreadY:0.05});
+  if (P.ground) P.jumping = 0;
+  if (wasAir && P.ground && vy0 < -4){ P.squash = 0.12; audio.sfx('land'); emit(smokePS, P.x, P.y + 0.05, 0, 6, [0.7, 0.58, 0.48, 0.35], {spd:1, life:0.8, size:0.5, grow:2, spreadY:0.05}); }
+  if (P.ground){ const p = platUnder(); if (p) P.safe = {x:Math.min(Math.max(P.x, p.x0 + 0.8), p.x1 - 0.8), y:p.top}; }
   P.phase += dt*(Math.abs(P.vx) > 0.5 && P.ground ? Math.abs(P.vx)*2.1 : 0);
+  P.squash = Math.max(0, P.squash - dt);
   target = findTarget();
   P.stepCd -= dt; P.stepFx = Math.max(0, P.stepFx - dt);
-  if (pressed.step && P.stepCd <= 0){
-    if (target){
-      emit(glowPS, P.x, P.y + 0.9, 0, 50, [0.5, 0.3, 1.3, 1], {spd:2.2, life:0.6, size:0.22});
-      emit(smokePS, P.x, P.y + 0.9, 0, 18, [0.05, 0.03, 0.1, 0.7], {spd:1.2, life:0.9, size:0.7, grow:2});
-      P.x = target.x; P.y = target.y; P.vy = 0; P.vx = 0; P.stepCd = 0.45; P.stepFx = 0.35; P.nzx = P.x - 0.8*P.face; P.nzy = P.y;
-      emit(glowPS, P.x, P.y + 0.9, 0, 60, [0.75, 0.55, 1.6, 1], {spd:2.6, life:0.7, size:0.24});
-      audio.sfx('step');
-    } else if (!toastCur || toastCur.sp !== 'NIZHAL') say('NIZHAL', 'No shadow in reach. In full sun, you\'re just a man.');
-  }
+  // Step is buffered: press a moment early (say, while the banner swings in) and it fires as soon as shade is in reach.
+  if (pressed.step){ P.sbuf = 0.25; P.sArmed = 1; } else P.sbuf -= dt;
+  if (P.sbuf > 0 && P.stepCd <= 0 && target){ doStep(); P.sbuf = 0; P.sArmed = 0; }
+  else if (P.sbuf <= 0 && P.sArmed){ P.sArmed = 0; audio.sfx('fizzle');
+    emit(glowPS, P.x + P.face*0.3, P.y + 1.1, 0, 10, [0.5, 0.35, 1.1, 0.8], {spd:0.8, life:0.4, size:0.12});
+    if (time - lastNoShade > 6){ lastNoShade = time; say('NIZHAL', 'No shade in reach. In full sun, you\'re just a man.'); } }
   P.atkCd -= dt; P.atk = Math.max(0, P.atk - dt);
   if (pressed.cut && P.atkCd <= 0){
-    P.atk = 0.22; P.atkCd = 0.32; audio.sfx('cut');
-    for (const c of CANOPIES) if (!c.cut && Math.abs(P.x - c.post) < 1.9){ c.cut = 1; c.t = 0; audio.sfx('cloth');
+    // auto-face the nearest shadow so a Cut never whiffs because you were turned the wrong way
+    let near = null; for (const w of walkers) if (w.alive && !w.burn && Math.abs(w.x - P.x) < 2.2 && (!near || Math.abs(w.x - P.x) < Math.abs(near.x - P.x))) near = w;
+    if (near) P.face = Math.sign(near.x - P.x) || P.face;
+    P.atk = 0.22; P.atkCd = 0.28; audio.sfx('cut');
+    for (const c of CANOPIES) if (!c.cut && Math.abs(P.x - c.post) < 2.2){ c.cut = 1; c.t = 0; audio.sfx('cloth'); buzz(15);
       emit(glowPS, c.post, 2.2, -0.6, 14, [1.6, 1.1, 0.4, 1], {spd:1.6, life:0.5, size:0.12});
       say('VO', c === CANOPIES[0] ? 'That silk was meant to shade the prince.' : 'He wouldn\'t miss it.'); }
     for (const w of walkers) if (w.alive && !w.burn){ const d = (w.x - P.x)*P.face;
-      if (d > -0.2 && d < 1.7 && Math.abs(P.y - w.y) < 1.5){ w.hp--; w.kv = P.face*11; w.active = 1;
+      if (d > -0.3 && d < 2.0 && Math.abs(P.y - w.y) < 1.5){ w.hp--; w.kv = P.face*12; w.active = 1; hitStop = 0.05; buzz(18);
         emit(smokePS, w.x, w.y + 1.1, 0, 14, [0.04, 0.02, 0.08, 0.8], {spd:2, life:0.6, size:0.5}); if (w.hp <= 0) w.burn = 0.35; } }
   }
   P.nzx += (P.x - 0.8*P.face - P.nzx)*Math.min(1, dt*5.5); P.nzy += (P.y - P.nzy)*Math.min(1, dt*8);
-  if (P.y < -12) die();
+  if (P.y < -5) die(true);
 }
 function updateWalkers(dt){
   for (const w of walkers){
@@ -1278,7 +1452,7 @@ function updateWalkers(dt){
     if (!w.active && Math.abs(dx) < w.wake) w.active = 1;
     if (w.active && P.alive && Math.abs(dx) > 0.1){ const dir = Math.sign(dx), nx = w.x + dir*w.spd*dt; if (shadeAt(nx + dir*0.3, w.y, shadows)) w.x = nx; w.face = dir; }
     if (Math.random() < dt*6) emit(smokePS, w.x, w.y + 1.4, -0.1, 1, [0.03, 0.02, 0.05, 0.55], {spd:0.4, life:1.3, size:0.5, grow:2.2, up:0.5});
-    if (P.alive && Math.abs(dx) < 0.5 && P.y < w.y + 1.6 && P.y + PH > w.y) die();
+    if (P.alive && Math.abs(dx) < 0.5 && P.y < w.y + 1.6 && P.y + PH > w.y) die(false);
   }
 }
 
@@ -1286,6 +1460,8 @@ function updateWalkers(dt){
 // Render-side updates
 // =====================================================================
 function faceRig(r, face){ r.root.rotation.y = face > 0 ? Math.PI/2 : -Math.PI/2; }
+let uiReady = null, uiCut = null, tmT = 0, camY = 0, camAhead = 1.7;
+const stepBtn = document.querySelector('.btn.step'), cutBtn = document.querySelector('.btn.cut');
 function updateVisuals(dt){
   // swinging banner and its ropes
   const s = swingState(time);
@@ -1302,6 +1478,7 @@ function updateVisuals(dt){
   // Ilan
   if (P.alive && state !== 'title' && state !== 'loading'){
     ilan.root.visible = true; ilan.root.position.set(P.x, P.y, 0); faceRig(ilan, P.face);
+    const sq = P.squash > 0 ? Math.sin(P.squash/0.12*Math.PI)*0.08 : 0; ilan.root.scale.set(1 + sq*0.5, 1 - sq, 1 + sq*0.5);
     const moving = Math.abs(P.vx) > 0.5;
     poseRig(ilan, {name: !P.ground ? 'air' : moving ? 'run' : 'idle', phase:P.phase, t:time, atk:P.atk});
     if (state === 'cut' && cutThen === 'credits') poseRig(ilan, {name: P.x < 176.19 ? 'run' : 'idle', phase:P.phase, t:time});
@@ -1331,23 +1508,30 @@ function updateVisuals(dt){
   walkerRigs.forEach((r, i) => { const w = walkers[i]; if (!w || !w.alive){ r.root.visible = false; return; }
     r.root.visible = true; r.root.position.set(w.x, w.y, -0.05); faceRig(r, P.x > w.x ? 1 : -1);
     poseRig(r, {name:'hunch', phase:w.ph, moving:w.active}); const k = w.burn > 0 ? Math.max(0.05, w.burn/0.7) : 1; r.root.scale.set(1.12, 1.12*k, 1.12); });
-  // HUD eye
-  const ready = target && P.stepCd <= 0 && state === 'play';
-  $('eye').classList.toggle('on', !!ready); $('eyeTxt').textContent = ready ? 'Shadow in reach' : (shadeAt(P.x, P.y, shadows) ? 'In shadow' : 'In the sun');
+  // HUD eye and button states
+  const ready = !!(target && P.stepCd <= 0 && state === 'play');
+  if (ready !== uiReady){ uiReady = ready; $('eye').classList.toggle('on', ready); stepBtn.classList.toggle('ready', ready); }
+  $('eyeTxt').textContent = ready ? 'Shadow in reach' : (shadeAt(P.x, P.y, shadows) ? 'In shadow' : 'In the sun');
+  const cutReady = state === 'play' && (CANOPIES.some(c => !c.cut && Math.abs(P.x - c.post) < 2.2) || walkers.some(w => w.alive && !w.burn && Math.abs(w.x - P.x) < 2.2));
+  if (cutReady !== uiCut){ uiCut = cutReady; cutBtn.classList.toggle('ready', cutReady); }
+  if ((tmT -= dt) <= 0){ tmT = 0.25; $('tm').textContent = fmtT(playTime); }
+  for (const mm of memMeshes) if (!mm.got){ mm.core.rotation.y += dt*2; mm.g.position.y = mm.m.y + Math.sin(time*2 + mm.m.x)*0.08; }
   updatePS(glowPS, dt); updatePS(smokePS, dt); updateDust(dt);
-  // camera
-  if (state === 'play' || (state === 'cut' && false)){
-    const look = new THREE.Vector3(P.x + P.face*1.8, P.y + 1.7, 0), aspect = innerWidth/innerHeight;
-    const dist = Math.max(14.5, 7.2/(Math.tan(THREE.MathUtils.degToRad(19))*aspect));
-    camLookT.lerp(look, Math.min(1, dt*3));
+  // camera: steady through ordinary jumps, follows when you land higher or fall
+  if (state === 'play'){
+    if (P.ground || P.y < camY - 0.6 || !P.alive) camY += (P.y - camY)*Math.min(1, dt*4);
+    camAhead += ((P.face*1.7 + P.vx*0.2) - camAhead)*Math.min(1, dt*2.4);
+    const aspect = innerWidth/innerHeight, dist = Math.max(14.5, 7.2/(Math.tan(THREE.MathUtils.degToRad(19))*aspect));
+    camLookT.set(P.x + camAhead, camY + 1.7, 0);
     camPosT.set(camLookT.x - 0.8, camLookT.y + 1.6 + dist*0.05, dist);
   }
-  const k = state === 'cut' ? Math.min(1, dt*1.2) : Math.min(1, dt*5);
+  const k = state === 'cut' ? Math.min(1, dt*1.2) : Math.min(1, dt*7);
   camPos.lerp(camPosT, k); camLook.lerp(camLookT, k);
   shakeT = Math.max(0, shakeT - dt);
   const sh = shakeT > 0 ? shakeT*0.25 : 0;
   camera.position.set(camPos.x + (Math.random() - .5)*sh, camPos.y + (Math.random() - .5)*sh, camPos.z);
   camera.lookAt(camLook);
+  fovKick = Math.max(0, fovKick - dt*14); const fov = 38 - fovKick; if (Math.abs(camera.fov - fov) > 0.01){ camera.fov = fov; camera.updateProjectionMatrix(); }
   sky.position.copy(camera.position);
   // sun and its shadow frustum follow the action
   const fx = state === 'play' || state === 'cut' ? (state === 'cut' && cutLines && cutLines[cutI].cam && cutLines[cutI].cam[1] > 5 ? camLook.x : P.x) : 0;
@@ -1392,26 +1576,43 @@ const audio = {
     if (kind === 'death'){ tone(1.2, 160, 40, 0.3, 'triangle'); noise(1.0, 800, 90, 0.8, 0.3); }
     if (kind === 'burn') noise(0.7, 1800, 300, 0.6, 0.12);
     if (kind === 'rumble'){ noise(2.2, 120, 50, 0.7, 0.6, 'lowpass'); }
+    if (kind === 'land') noise(0.09, 420, 160, 0.8, 0.12);
+    if (kind === 'fizzle') noise(0.18, 1400, 500, 1.2, 0.07);
+    if (kind === 'chime'){ tone(0.35, 660, 660, 0.09); tone(0.5, 990, 990, 0.07); }
+    if (kind === 'collect'){ tone(0.7, 523, 1568, 0.14, 'triangle'); tone(0.9, 784, 784, 0.06); noise(0.4, 6000, 9000, 1, 0.05, 'highpass'); }
   }
 };
 
 // =====================================================================
 // Boot
 // =====================================================================
-let last = performance.now(), frames = 0;
+let last = performance.now(), frames = 0, acc = 0, ftAvg = 16, qT = 0;
+const FIXED = 1/120;
 function frame(now){
-  const dt = Math.min(1/30, (now - last)/1000); last = now;
-  if (state !== 'loading'){ update(dt); updateVisuals(dt); frames++; }
+  const rdt = Math.min(0.1, (now - last)/1000); last = now;
+  pollPad();
+  if (state !== 'loading'){
+    shadows = computeShadows(P.x - 14, P.x + 16, time);
+    if (hitStop > 0) hitStop -= rdt;      // a short freeze-frame on Steps, hits and pickups
+    else { acc += rdt; let n = 0; while (acc >= FIXED && n < 12){ update(FIXED); acc -= FIXED; n++; } if (n === 12) acc = 0; }
+    updateVisuals(rdt); frames++;
+  }
+  // keep the frame rate smooth on slower phones by lowering render resolution
+  ftAvg += (rdt*1000 - ftAvg)*0.05; qT += rdt;
+  if (qT > 2 && state !== 'loading'){ qT = 0;
+    if (ftAvg > 24 && curDPR > 0.75){ curDPR = Math.max(0.75, curDPR - 0.15); renderer.setPixelRatio(curDPR); composer.setPixelRatio(curDPR); }
+    else if (ftAvg < 14 && curDPR < DPR){ curDPR = Math.min(DPR, curDPR + 0.1); renderer.setPixelRatio(curDPR); composer.setPixelRatio(curDPR); }
+    if (ftAvg > 34) bloom.enabled = false; }
   composer.render();
   requestAnimationFrame(frame);
 }
 window.__kanchi = { get frames(){ return frames; }, get P(){ return P; }, get state(){ return state; }, get shadows(){ return shadows; }, get target(){ return target; }, get walkers(){ return walkers; },
-  advance, held, pressed, CANOPIES,
+  advance, held, pressed, CANOPIES, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
   skipToPlay(){ $('title').classList.add('hide'); $('sub').className = ''; document.body.classList.remove('cine'); state = 'play'; $('hud').classList.remove('hide'); },
   place(x, y, face=1){ P.x = x; P.y = y; P.vx = P.vy = 0; P.face = face; camPos.set(x, y + 2.5, 13); camLook.set(x, y + 1, 0); camPosT.copy(camPos); camLookT.copy(camLook); } };
 
 requestAnimationFrame(() => setTimeout(() => {
-  buildMaterials(); buildProxies(); buildWorld(); newGame();
+  buildMaterials(); buildProxies(); buildWorld(); buildMemories(); newGame();
   $('hud').classList.add('hide');
   state = 'title'; $('loading').classList.add('hide'); setTimeout(() => $('loading').style.display = 'none', 900);
   last = performance.now(); requestAnimationFrame(frame);

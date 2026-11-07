@@ -18,12 +18,25 @@ A third-person action-platformer with realistic, AAA-level visuals, set in Vel N
 
 Open `prototype/index.html` in a browser. On a phone, turn it sideways.
 
-| Action | Keyboard | Touch |
-|---|---|---|
-| Move | A / D or ← → | ◀ ▶ |
-| Jump | Space or W | Jump |
-| Shadow Step | K or Shift | Step |
-| Cut (ropes, enemies) | J | Cut |
+| Action | Keyboard | Touch | Gamepad |
+|---|---|---|---|
+| Run | A / D or ← → | Drag anywhere on the left half of the screen | Left stick or d-pad |
+| Jump (hold for higher) | Space or W | JUMP | A |
+| Shadow Step | K, E or Shift | STEP (glows when shade is in reach) | X, RB or RT |
+| Cut (ropes, enemies) | J or F | CUT (glows when something is in range) | B or Y |
+
+**Guided tutorial:** one objective at a time, shown at the top of the screen with the button to press. The matching touch button pulses. Each objective stays until you've done it, so nothing is missed: run, jump, hold-jump, gap jump, first Shadow Step, Step chains, mid-air Steps, timing a moving shadow, cutting canopies for shade, and escaping the hall.
+
+**Built to feel good:**
+- Physics run at a fixed 120 steps per second, so movement is the same on every device.
+- Jumps forgive you: a short window after leaving a ledge, a short buffer before landing, and a ledge assist that climbs you onto a ledge you nearly made.
+- Step is buffered: press it a moment early and it fires as soon as shade comes into reach.
+- Cut turns you toward the nearest shadow so it never misses.
+- A fall puts you back at the edge you jumped from, in under a second.
+- Freeze-frames, camera kicks, sound and vibration on Steps, hits and pickups.
+- On slower phones, resolution adjusts automatically to keep the frame rate smooth.
+
+**Replay value:** 8 shadow-memories are hidden on the route; several hang over gaps, so you grab them mid-jump and Step to safety. Your best time is saved on your device.
 
 **The rule:** Shadow Step teleports you into a shadow ahead, up to about 9.5 m away. The violet ghost shows where you'll land. In full sun with no shadow in reach, you're an ordinary man and can only run and jump.
 
