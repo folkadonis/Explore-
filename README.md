@@ -18,7 +18,7 @@ A third-person action-platformer with realistic, AAA-level visuals, set in Vel N
 
 ## Playing the prototype
 
-Open `prototype/index.html` in a browser. The game is **vertical (9:16)**: hold your phone upright. On a computer it plays in a centred vertical column.
+Open `prototype/index.html` in a browser. The game plays in **landscape**: on a phone, turn it sideways.
 
 | Action | Keyboard | Touch | Gamepad |
 |---|---|---|---|
