@@ -35,6 +35,31 @@ Art made in Gemini from `docs/asset-generation-brief.md`, prepared for the game.
 | SKY-01 | Stopped-noon sky | Chapter 1 sky | Usable. It's 16:9 rather than a 2:1 panorama, so the game mirrors it around the horizon |
 | SKY-02 | Pongal-morning sky | Jallikattu sky | Usable, same note |
 
+## Received in rounds 2 and 3
+
+| ID | Asset | In the game now as |
+|---|---|---|
+| ANI-04 | Stone temple elephant | Every Chapter 1 elephant (the old model still casts the shade you Step into) |
+| CHR-04 | Aditya, 16 (two poses) | Gripping the elders' rail during the jallikattu; holding out the coins in the closing scene |
+| CHR-05 | Captain Veeran | At the barricade beside young Ilan |
+| CHR-06 | Village headman | Announcing the bulls by the gate |
+| CHR-07 | Parai drummer | Two drummers on the cart |
+| CRW-04 | Grandmother | Joins the crowd (and Chapter 1's stone statues) |
+| CRW-11–14 | Rice-thrower, flower girl, odhuvar, server (granite) | Frozen around the terraces and the coronation hall; the flower girl is Malar |
+| PRP-02, 03, 04 | Pongal pot, sugarcane, banana plant | Around the arena and the bull gate |
+| PRP-05 | Coconut palm | Village palms and the lower city's palms |
+| PRP-07 | Tiger banner | Its cloth now dresses both Chapter 1 banners |
+| PRP-09 | Rope post | The canopy rope posts you Cut |
+| PRP-12 | Feast leaf | The coronation feast along the hall floor |
+| PRP-13 | Bullock cart | Behind the crowd platforms |
+| PRP-14 | Mango-leaf string | Over the bull gate |
+| REF-01–05 | Scene references | Full-screen cinematic stills at key story moments |
+| REF-06 | Material board | Cut into swatches in `prototype/assets/tex/MAT-*.jpg` for later use |
+
+**Not used yet:** PRP-06 canopy, PRP-08 drums, PRP-10 crown, PRP-11 coin cloth, PRP-15 lamp set (these sit on 3D objects that move or need close-up 3D; they're ready for when models arrive).
+
+**Repeats:** about 30 of the uploads in rounds 2 and 3 were exact repeats of earlier images; nothing needs re-sending.
+
 ## Next: what would help most
 
 1. **3D models of the three bulls and both Ilans.** Upload the files in `views/` (front, side, back) to Meshy's *Multi-image to 3D*, then rig: Mixamo for Ilan, Meshy or Tripo animation for the bulls. These are the only things the player sees up close.

@@ -63,6 +63,11 @@ body.cine .bar{height:11vh}
 #title .go{margin-top:26px;font-size:15px;opacity:.75;animation:pulse 2.4s infinite}
 #title .keys{font-size:13px;opacity:.55;margin-top:6px}
 @keyframes pulse{50%{opacity:.35}}
+#sub,#toast,#obj{z-index:6} .bar{z-index:5} #still{z-index:4;opacity:0;transition:opacity .9s;background:#000;overflow:hidden}
+#still.show{opacity:1}
+#still .bg{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(22px) brightness(.55)}
+#still img{position:absolute;left:50%;top:50%;height:100%;max-width:100%;object-fit:contain;transform:translate(-50%,-50%) scale(1.02);animation:kb 9s ease-out forwards}
+@keyframes kb{to{transform:translate(-50%,-50%) scale(1.09)}}
 #death{display:grid;place-items:center;background:radial-gradient(ellipse,rgba(10,5,18,.2),rgba(10,5,18,.75));opacity:0;transition:opacity .4s}
 #death.show{opacity:1}
 #death p{font-style:italic;font-size:clamp(19px,6cqw,27px);color:var(--gold);max-width:80%;text-align:center;text-shadow:0 2px 12px #000}
@@ -165,6 +170,7 @@ body.arena #toast{display:none}
 <div id="toast"><img class="por" alt=""><b></b><p></p></div>
 <div class="bar t"></div><div class="bar b"></div>
 <div id="sub"><img class="por" alt=""><b></b><p></p><small></small></div>
+<div class="layer" id="still"><div class="bg"></div><img alt=""></div>
 <div class="layer" id="death"><p></p></div>
 <div class="layer" id="credits">
   <div class="k">END OF CHAPTER I</div><h2>The Coronation of Ash</h2>
@@ -257,7 +263,7 @@ const TRIGGERS = [
   {x:63,  lines:[['VO','The temple elephants led the procession. Their bells stopped mid-swing.'],['NIZHAL','Big animals. Big shade.']]},
   {x:85,  lines:[['NIZHAL','Every shadow in Kanchi went somewhere. Mine just stayed.']]},
   {x:109, lines:[['NIZHAL','No shade out there.'],['ILAN','Then I\'ll make some.']]},
-  {x:135, lines:[['VO','The feast was still laid out. Steam hung over the rice like glass.']]},
+  {x:135, still:'REF-02_hall', lines:[['VO','The feast was still laid out. Steam hung over the rice like glass.']]},
   {x:146, lines:[['NIZHAL','Ilan. The dark is moving.']], spawn:1},
   {x:168.5,lines:[['VO','They followed me to the doorway. The light took them there.']]}
 ];
@@ -297,7 +303,7 @@ const INTRO = [
   {sp:'VO', t:'Most people remember Prince Aditya\'s coronation as an ordinary day.', cam:[9,1.2,17], look:[-4,34,-26]},
   {sp:'VO', t:'I\'m going to tell you what really happened.', cam:[6,1.6,12], look:[-4,30,-26]},
   {sp:'VO', t:'I opened Mayan\'s door. I lifted the Mirror. Then the minister struck it.', cam:[44,24,32], look:[30,-6,-18]},
-  {sp:'VO', t:'Every shadow in Kanchi tore loose. The people turned to stone. The sun stopped at noon.', cam:[60,6,14], look:[70,1,-2]},
+  {sp:'VO', still:'REF-01_terraces', t:'Every shadow in Kanchi tore loose. The people turned to stone. The sun stopped at noon.', cam:[60,6,14], look:[70,1,-2]},
   {sp:'VO', t:'I woke on the temple steps with a shard in my armband.', cam:[6.2,1.6,6.0], look:[2,0.4,0], wake:0},
   {sp:'NIZHAL', t:'Well. You\'ve really done it this time.', cam:[5.6,1.6,5.4], look:[1.2,0.8,-0.4], wake:1},
   {sp:'ILAN', t:'...Who said that?', cam:[5.4,2.0,5.2], look:[1.8,1.4,0], wake:2},
@@ -1035,7 +1041,7 @@ function buildWorld(){
   rngS = 51;
   for (let i = 0; i < PN; i++){ const x = -30 + rnd()*260, z = -20 - rnd()*70, s = 0.9 + rnd()*0.5;
     m4.compose(v3.set(x, -30, z), q.setFromEuler(new THREE.Euler(0, rnd()*6.28, 0)), sc.set(s, s, s)); trunks.setMatrixAt(i, m4); fronds.setMatrixAt(i, m4); }
-  scene.add(trunks, fronds);
+  scene.add(trunks, fronds); PROC.palms = {trunks, fronds, n:PN};
   // --- frozen crowds: on the terraces (behind the lane) and in the streets below
   const poses = ['cheer','namaskaram','garland','drum','idle'];
   const SG = poses.map(p => statueGeometry(p, 1, true));
@@ -1059,6 +1065,7 @@ function buildWorld(){
   for (const e of ELEPHANTS.concat([{x:24, z:-5, top:0, bg:1}, {x:57, z:-5.2, top:0, bg:1}, {x:158, z:-5.4, top:0, bg:1}])){
     const m = addMesh(ep.stone, MAT.stoneBig); m.position.set(e.x, e.top, e.z); const g = addMesh(ep.gold, MAT.gold); g.position.copy(m.position);
     if (e.bg){ m.rotation.y = g.rotation.y = 0.3; }
+    PROC.elephants.push({m, g, e});
   }
   // --- the hall: pillars, roof, parapet of miniature shrines, back wall, garlands
   const pg = pillarGeometry(HALL.y0);
@@ -1106,7 +1113,7 @@ function buildWorld(){
   // --- canopies, rope posts, support poles
   for (const c of CANOPIES){
     const post = addMesh(new THREE.CylinderGeometry(0.09, 0.11, 2.3, 10), MAT.wood); post.position.set(c.post, 1.15, -0.6);
-    const fin = addMesh(lathe([[0,0],[0.12,0],[0.14,0.1],[0.06,0.18],[0,0.32]], 12), MAT.brass); fin.position.set(c.post, 2.3, -0.6);
+    const fin = addMesh(lathe([[0,0],[0.12,0],[0.14,0.1],[0.06,0.18],[0,0.32]], 12), MAT.brass); fin.position.set(c.post, 2.3, -0.6); PROC.posts.push({post, fin, x:c.post});
     for (const x of [c.x0, c.x1]) for (const z of [c.z0, c.z1]){ const p = addMesh(new THREE.CylinderGeometry(0.06, 0.08, c.y + 20, 8), MAT.wood); p.position.set(x, c.y - (c.y + 20)/2 + 0.05, z); }
     const cl = new THREE.PlaneGeometry(1, c.z1 - c.z0, 20, 8); cl.rotateX(-Math.PI/2); cl.translate(0.5, 0, (c.z0 + c.z1)/2);
     const cp = cl.attributes.position;
@@ -1359,6 +1366,9 @@ function showSub(){
   s.querySelector('b').textContent = L.sp === 'VO' ? 'ILAN' : L.sp;
   s.querySelector('p').textContent = L.t;
   s.querySelector('small').textContent = TOUCH ? 'Tap to continue' : 'Enter to continue';
+  const st = $('still');
+  if (L.still){ const src = 'assets/stills/' + L.still + '.jpg'; const img = st.querySelector('img'); if (img.getAttribute('src') !== src){ img.src = src; img.style.animation = 'none'; void img.offsetWidth; img.style.animation = ''; }
+    st.querySelector('.bg').style.backgroundImage = `url(${src})`; st.classList.add('show'); } else st.classList.remove('show');
   if (L.cam){ camLookT.set(...L.look); camPosT.set(...L.cam);
     if (PORTRAIT()) camPosT.sub(camLookT).multiplyScalar(1.55).add(camLookT); }
 }
@@ -1368,7 +1378,7 @@ function advance(){
   if (state === 'cut'){
     if (cutT < 0.35) return;
     cutI++; cutT = 0;
-    if (cutI >= cutLines.length){ $('sub').className = '';
+    if (cutI >= cutLines.length){ $('sub').className = ''; $('still').classList.remove('show');
       if (cutThen === 'bridge'){ startCut(BRIDGE, 'arena'); return; }
       if (cutThen === 'arena'){ enterArena(); startCut(JK_INTRO, 'jk'); return; }
       document.body.classList.remove('cine');
@@ -1444,6 +1454,7 @@ function update(dt){
     updateWalkers(dt);
     updateObjectives(dt);
     for (const t of TRIGGERS) if (!t.done && P.x >= t.x && P.alive){ t.done = 1; for (const [sp, tx] of t.lines) say(sp, tx);
+      if (t.still){ const st = $('still'); st.querySelector('img').src = st.querySelector('.bg').style.backgroundImage = ''; st.querySelector('img').src = 'assets/stills/' + t.still + '.jpg'; st.querySelector('.bg').style.backgroundImage = `url(assets/stills/${t.still}.jpg)`; st.classList.add('show'); setTimeout(() => st.classList.remove('show'), 2600); }
       if (t.spawn && !hallSpawned){ hallSpawned = true; spawnChasers(); shakeT = 0.6; audio.sfx('rumble'); } }
     if (P.ground && P.alive) for (let i = CHECKPOINTS.length - 1; i > cpIdx; i--) if (P.x >= CHECKPOINTS[i].x){ cpIdx = i; break; }
     if (P.alive) for (const mm of memMeshes){ if (mm.got) continue;
@@ -1657,12 +1668,12 @@ const BRIDGE = [
   {sp:'VO', t:'Four Pongals before the coronation. Mattu Pongal. I was sixteen.', cam:[171,8,15], look:[178,4,-2]}
 ];
 const JK_INTRO = [
-  {sp:'VO', t:'Sevvappur village. Every house had boiled its Pongal at sunrise.', cam:A(-9,3.2,9), look:A(-2,1.2,-1)},
+  {sp:'VO', still:'REF-03_arena', t:'Sevvappur village. Every house had boiled its Pongal at sunrise.', cam:A(-9,3.2,9), look:A(-2,1.2,-1)},
   {sp:'VO', t:'Kolams at every door. Sugarcane at every gate. The parai never stopped.', cam:A(6,5,16), look:A(20,1.5,-4)},
   {sp:'VEERAN', t:'Your father know you\'re here?', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
   {sp:'ILAN', t:'My father\'s carving a wall in Kanchi.', cam:A(25.6,1.8,3.6), look:A(24,1.5,0)},
   {sp:'VEERAN', t:'Then I\'ll be the one who carries you home.', cam:A(21.4,1.8,4.2), look:A(23.2,1.5,-1)},
-  {sp:'HEADMAN', t:'From the house of Muthan the potter: Vellaiyan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
+  {sp:'HEADMAN', still:'REF-04_bull-gate', t:'From the house of Muthan the potter: Vellaiyan!', cam:A(37,2.4,7.5), look:A(43,1.6,0)},
   {sp:'VO', t:'Hold the hump. Not the horns, not the tail. Fifteen strides, and the cloth on his horns is yours.', cam:A(30,2.6,9), look:A(36,1.2,0)}
 ];
 const JK_BETWEEN = [[
@@ -1676,7 +1687,7 @@ const JK_BETWEEN = [[
   {sp:'VO', t:'On the elders\' platform, the prince had stopped leaning over the rail. He was gripping it.', cam:A(17,3.4,1.5), look:A(20,3.0,-6.3)}
 ]];
 const JK_OUTRO = [
-  {sp:'HEADMAN', t:'Sivappan of the palace herd has been held! Honour to the royal house!', cam:A(8,3,10), look:A(14,1.5,-3)},
+  {sp:'HEADMAN', still:'REF-05_crowd', t:'Sivappan of the palace herd has been held! Honour to the royal house!', cam:A(8,3,10), look:A(14,1.5,-3)},
   {sp:'VO', t:'That was the rule. The honour goes to the house that raised the bull.', cam:A(1,1.8,5), look:A(3,1.3,0)},
   {sp:'VO', t:'Nobody asked my name. I told myself I didn\'t mind.', cam:A(-0.6,1.6,4.2), look:A(2.6,1.3,0)},
   {sp:'ADITYA', t:'You held him.', cam:A(5.6,1.6,3.6), look:A(3.6,1.4,0)},
@@ -1768,7 +1779,7 @@ function makePerson(cloth, extra={}){
   scene.add(r.root); return r;
 }
 
-const ARENA = {};
+const ARENA = {banana:[], pots:[]};
 function buildArena(){
   if (arenaBuilt) return; arenaBuilt = true;
   MAT.kanakambaram = new THREE.MeshStandardMaterial({color:0xe8701a, roughness:0.8});   // kanakambaram orange
@@ -1802,15 +1813,15 @@ function buildArena(){
   const bl = new THREE.MeshStandardMaterial({map:bananaLeafTex(), alphaTest:0.4, side:THREE.DoubleSide, roughness:0.7});
   const trunkM = new THREE.MeshStandardMaterial({color:0x8fa35a, roughness:0.8});
   for (const [x, z] of [[41.8, -1.9], [41.8, 1.9], [-1.5, -2.4]]){
-    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.15, 2.4, 10), trunkM); t.position.set(AX + x, 1.2, z); t.castShadow = true; scene.add(t);
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.15, 2.4, 10), trunkM); t.position.set(AX + x, 1.2, z); t.castShadow = true; scene.add(t); ARENA.banana.push(t);
     for (let k = 0; k < 6; k++){ const lf = new THREE.PlaneGeometry(0.5, 1.8, 1, 6); const p = lf.attributes.position;
       for (let i = 0; i < p.count; i++){ const yy = p.getY(i) + 0.9; p.setY(i, yy); p.setZ(i, -0.18*yy*yy); }
-      lf.rotateX(-0.6); lf.rotateY(k/6*Math.PI*2); const mm = new THREE.Mesh(lf, bl); mm.position.set(AX + x, 2.3, z); mm.castShadow = true; scene.add(mm); }
+      lf.rotateX(-0.6); lf.rotateY(k/6*Math.PI*2); const mm = new THREE.Mesh(lf, bl); mm.position.set(AX + x, 2.3, z); mm.castShadow = true; scene.add(mm); ARENA.banana.push(mm); }
   }
   // sugarcane bundles leaning on the gate
   const cane = [], caneM = new THREE.MeshStandardMaterial({color:0x6b4a5a, roughness:0.6});
   for (let i = 0; i < 9; i++) cane.push(place(new THREE.CylinderGeometry(0.03, 0.03, 2.4, 6), AX + 41.6 - (i % 3)*0.07, 1.15, 2.2 + i*0.06, 0.1, 0, 0.18));
-  const cm = new THREE.Mesh(merge(cane), caneM); cm.castShadow = true; scene.add(cm);
+  const cm = new THREE.Mesh(merge(cane), caneM); cm.castShadow = true; scene.add(cm); ARENA.cane = cm;
   // kolams on the swept earth
   const kt = kolamTex(), km = new THREE.MeshStandardMaterial({map:kt, transparent:true, depthWrite:false, roughness:1});
   for (const [x, z, s] of [[-3, 1, 2.6], [8, 4.8, 2.2], [38, 4.6, 2.4], [-6.5, -1.5, 2]]){ const k = new THREE.Mesh(new THREE.PlaneGeometry(s, s), km); k.rotation.x = -Math.PI/2; k.position.set(AX + x, 0.012, z); k.receiveShadow = true; scene.add(k); }
@@ -1818,9 +1829,9 @@ function buildArena(){
   const potM = new THREE.MeshStandardMaterial({color:0x9c4a2a, roughness:0.75}), stoneM = MAT.stone;
   const potG = lathe([[0, 0], [0.16, 0.02], [0.26, 0.14], [0.27, 0.3], [0.18, 0.44], [0.15, 0.48], [0.19, 0.52], [0.16, 0.54]], 20);
   for (const [x, z] of [[-4, -0.8], [-2.6, 0.6], [-5.6, 1.2]]){
-    const pot = new THREE.Mesh(potG, potM); pot.position.set(AX + x, 0.22, z); pot.castShadow = true; scene.add(pot);
-    for (let k = 0; k < 3; k++){ const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13), stoneM); const a = k/3*Math.PI*2; st.position.set(AX + x + Math.cos(a)*0.24, 0.1, z + Math.sin(a)*0.24); scene.add(st); }
-    for (let k = 0; k < 5; k++){ const lf = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.32), leafM); lf.position.set(AX + x + Math.cos(k)*0.17, 0.82, z + Math.sin(k)*0.17); lf.rotation.set(0.3, k, 0.2); scene.add(lf); }
+    const pot = new THREE.Mesh(potG, potM); pot.position.set(AX + x, 0.22, z); pot.castShadow = true; scene.add(pot); ARENA.pots.push({x, z, o:[pot]});
+    for (let k = 0; k < 3; k++){ const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13), stoneM); const a = k/3*Math.PI*2; st.position.set(AX + x + Math.cos(a)*0.24, 0.1, z + Math.sin(a)*0.24); scene.add(st); ARENA.pots.at(-1).o.push(st); }
+    for (let k = 0; k < 5; k++){ const lf = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.32), leafM); lf.position.set(AX + x + Math.cos(k)*0.17, 0.82, z + Math.sin(k)*0.17); lf.rotation.set(0.3, k, 0.2); scene.add(lf); ARENA.pots.at(-1).o.push(lf); }
     steamSpots.push([AX + x, 0.78, z]);
   }
   // village houses behind the crowd, and coconut palms
@@ -1832,7 +1843,7 @@ function buildArena(){
   walls.receiveShadow = roofs.castShadow = true; sc.set(1, 1, 1); scene.add(walls, roofs); ARENA.houses = {walls, roofs, n:HN};
   const PNum = 14, tr = new THREE.InstancedMesh(PALM.trunk, MAT.trunk, PNum), fr = new THREE.InstancedMesh(PALM.frond, MAT.frond, PNum);
   for (let i = 0; i < PNum; i++){ const s = 0.8 + rnd()*0.4; m4.compose(v.set(AX - 14 + i*5 + rnd()*2, 0, -14 - rnd()*12), q.setFromEuler(new THREE.Euler(0, rnd()*6, 0)), sc.set(s, s, s)); tr.setMatrixAt(i, m4); fr.setMatrixAt(i, m4); }
-  sc.set(1, 1, 1); scene.add(tr, fr);
+  sc.set(1, 1, 1); scene.add(tr, fr); ARENA.palms = {tr, fr, n:PNum};
   // the crowd: villagers in madder red, indigo, turmeric yellow and plain cotton, cheering from the carts
   const cSkin = MAT.skin.clone(), cCloth = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.9});
   const dyes = [0xf1e8d6, 0xf1e8d6, 0xa3201d, 0x2c3f7a, 0xd9a21b, 0x2f6b3a, 0x7a2a52];
@@ -2054,6 +2065,7 @@ function jkVisuals(dt){
     const out = cutLines === JK_OUTRO;
     ilan.root.position.set(out ? AX + 2.8 : ILAN_X, 0, 0); faceRig(ilan, 1); ilan.tilt.rotation.set(0, 0, 0); poseRig(ilan, {name:'idle', t:time});
     if (out){ people.aditya.root.position.set(AX + 4.2, 0, 0.1); people.aditya.root.rotation.y = -Math.PI/2; }
+    if (ARENA.bb && ARENA.bb.adCoins){ ARENA.bb.adCoins.visible = out; if (ARENA.bb.adRail) ARENA.bb.adRail.visible = !out; people.aditya.root.visible = false; }
     $('jkring').style.opacity = 0;
   }
   updatePS(glowPS, dt); updatePS(smokePS, dt);
@@ -2087,11 +2099,17 @@ const ART_FILES = {
   ashlar:'tex/TEX-01_granite-ashlar.jpg', flag:'tex/TEX-02_flagstone.jpg', earth:'tex/TEX-05_arena-earth.jpg',
   skyNoon:'sky/SKY-01_stopped-noon.jpg', skyPongal:'sky/SKY-02_pongal-morning.jpg',
   bull1:'billboards/ANI-01_vellaiyan_side.webp', bull2:'billboards/ANI-02_karuppan_side.webp', bull3:'billboards/ANI-03_sivappan_side.webp',
-  plinth:'tex/ARC-05_plinth-strip.jpg'
+  plinth:'tex/ARC-05_plinth-strip.jpg', elephant:'billboards/ANI-04_stone-elephant_side.webp',
+  veeran:'billboards/CHR-05_veeran_front.webp', headman:'billboards/CHR-06_headman_front.webp', drummer:'billboards/CHR-07_parai-drummer_front.webp',
+  adRail:'billboards/CHR-04_aditya-16_rail.webp', adCoins:'billboards/CHR-04_aditya-16_coins.webp', crw04:'billboards/CRW-04_grandmother_front.webp',
+  riceThrower:'billboards/CRW-11_rice-thrower_side.webp', flowerGirl:'billboards/CRW-12_flower-girl_front.webp', odhuvar:'billboards/CRW-13_odhuvar_front.webp', server:'billboards/CRW-14_server_side.webp',
+  pot:'billboards/PRP-02_pongal-pot_front.webp', cane:'billboards/PRP-03_sugarcane_front.webp', banana:'billboards/PRP-04_banana_front.webp', palm:'billboards/PRP-05_coconut-palm_front.webp',
+  palm2:'billboards/PRP-05_coconut-palm_side.webp', ropePost:'billboards/PRP-09_rope-post_front.webp', cart:'billboards/PRP-13_bullock-cart_side.webp', mango:'billboards/PRP-14_mango-leaves_front.webp',
+  feast:'billboards/PRP-12_feast-leaf_front.webp', bannerCloth:'tex/PRP-07_banner-cloth.jpg'
 };
 // height in metres of each person or object as drawn (raised arms included)
-const CROWD = [['crw01', 2.15], ['crw02', 1.7], ['crw03', 2.0], ['crw05', 2.55], ['crw06', 1.28], ['crw07', 1.62], ['crw08', 2.12], ['crw09', 1.62]];
-const PROC = {skyline:[], terraceCrowd:[], lowerCrowd:[], lane:[], lamps:[], plinths:[]};
+const CROWD = [['crw01', 2.15], ['crw02', 1.7], ['crw03', 2.0], ['crw04', 1.58], ['crw05', 2.55], ['crw06', 1.28], ['crw07', 1.62], ['crw08', 2.12], ['crw09', 1.62]];
+const PROC = {skyline:[], terraceCrowd:[], lowerCrowd:[], lane:[], lamps:[], plinths:[], elephants:[], posts:[]};
 const texLoader = new THREE.TextureLoader();
 const artReady = Promise.all(Object.entries(ART_FILES).map(([k, f]) => new Promise(res => texLoader.load(ART_DIR + f,
   t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; ART[k] = t; res(); }, undefined, () => res()))));
@@ -2175,6 +2193,27 @@ function applyWorldArt(){
       const strip = new THREE.Mesh(new THREE.PlaneGeometry(len, H), m); strip.position.set(p.x0 + len/2, p.top - H/2 - 0.02, p.zf + 0.21); strip.receiveShadow = true; scene.add(strip);
     }
   }
+  if (ART.elephant){
+    // the photo is what you see; the old model stays as an invisible shadow-caster so the shade you can Step into is unchanged
+    const hide = new THREE.MeshBasicMaterial({colorWrite:false, depthWrite:false});
+    for (const {m, g, e} of PROC.elephants){
+      m.material = hide; g.material = hide;
+      billboard('elephant', 5.0, e.x + 0.47, e.top, e.z + (e.bg ? 0 : 0.2), {stone:true, flip:true, shadow:false});
+    }
+  }
+  if (ART.bannerCloth){ const t = ART.bannerCloth; t.colorSpace = THREE.SRGBColorSpace; MAT.banner.map = t; MAT.banner.needsUpdate = true; }
+  if (ART.ropePost) for (const P of PROC.posts){ P.post.visible = P.fin.visible = false; billboard('ropePost', 2.4, P.x, 0, -0.6, {glow:0.12}); }
+  if (ART.palm && PROC.palms){ const {trunks, fronds, n} = PROC.palms; trunks.visible = fronds.visible = false;
+    const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), a = [], b = [];
+    for (let i = 0; i < n; i++){ trunks.getMatrixAt(i, m4); m4.decompose(p, q, s); (i % 2 ? a : b).push([p.x, -30, p.z, s.x, 0, i % 3 === 0]); }
+    billboardCrowd('palm', 13, a, {glow:0.1, shadow:false}); if (ART.palm2) billboardCrowd('palm2', 13, b, {glow:0.1, shadow:false}); }
+  // the coronation feast and its frozen servers and singers, in the hall
+  if (ART.feast) for (let x = HALL.x0 + 2.2; x < HALL.x1 - 1; x += 2.6) for (const z of [-1.7, -3.1]){
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 0.55), bbMaterial('feast', {glow:0.15})); m.rotation.x = -Math.PI/2; m.position.set(x + (z < -2 ? 1.1 : 0), 0.015, z); m.receiveShadow = true; scene.add(m); }
+  if (ART.server) for (const x of [143.5, 152.6, 160.4]) billboard('server', 1.72, x, 0, -2.45, {stone:true, flip:x > 150});
+  if (ART.odhuvar) for (const x of [146.9, 157.3]) billboard('odhuvar', 1.75, x, 0, -4.6, {stone:true});
+  if (ART.riceThrower) for (const [x, y, z] of [[37.5, 0, -3.4], [125.2, 0, -3.6], [174.6, 1.3, -3.2]]) billboard('riceThrower', 1.68, x, y, z, {stone:true, flip:x > 100});
+  if (ART.flowerGirl) billboard('flowerGirl', 1.28, 20.5, 0, -2.6, {stone:true});
   if (ART.pillar && PROC.pillars){ const pil = PROC.pillars; pil.visible = false; const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
     for (let i = 0; i < pil.count; i++){ pil.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, 0, p.z, 1]); }
     billboardCrowd('pillar', HALL.y0, list, {glow:0.1}); }
@@ -2245,6 +2284,24 @@ function applyArenaArt(){
     per.forEach((list, t) => { const im = billboardCrowd(CROWD[t][0], CROWD[t][1], list, {glow:0.16}); const grp = new THREE.Group(); scene.remove(im); grp.add(im); scene.add(grp); crowd.push({grp, ph:t*1.3}); });
   }
   if (ART.crw10) for (const x of [28.5, 33, 37.6]) billboard('crw10', 1.45, AX + x, 0, -2.05, {glow:0.16, flip:x > 33});
+  const swap = (rig, key, h, x, y, z, opt={}) => { if (!ART[key]) return null; rig.root.visible = false; rig.hidden = true; return billboard(key, h, x, y, z, Object.assign({glow:0.16}, opt)); };
+  ARENA.bb = {
+    veeran:swap(people.veeran, 'veeran', 1.86, AX + 22.8, 0, -2.0),
+    headman:swap(people.headman, 'headman', 1.98, AX + 40.6, 0, -2.0, {flip:true}),
+    adRail:swap(people.aditya, 'adRail', 1.75, AX + 20, 2.0, -5.55),
+    adCoins:ART.adCoins ? billboard('adCoins', 1.72, AX + 4.2, 0, 0.1, {glow:0.16, flip:true}) : null
+  };
+  if (ARENA.bb.adCoins) ARENA.bb.adCoins.visible = false;
+  if (ART.drummer) people.drum.forEach((d, i) => { d.root.visible = false; d.hidden = true; billboard('drummer', 1.72, AX + 30 + i*0.95, 0.5, -4.2, {glow:0.16, flip:i === 1}); });
+  if (ART.cart) for (const [x, f] of [[4, 0], [12.5, 1], [26.5, 0], [35, 1], [43, 0]]) billboard('cart', 1.75, AX + x, 0, -7.3, {glow:0.12, flip:!!f});
+  if (ART.banana){ for (const o of ARENA.banana) o.visible = false; for (const [x, z] of [[41.8, -1.9], [41.4, 2.4], [-1.5, -2.4]]) billboard('banana', 3.0, AX + x, 0, z, {glow:0.14}); }
+  if (ART.cane && ARENA.cane){ ARENA.cane.visible = false; billboard('cane', 2.3, AX + 41.5, 0, 2.5, {glow:0.14}); billboard('cane', 2.2, AX + 41.9, 0, -2.6, {glow:0.14, flip:true}); }
+  if (ART.pot) for (const P of ARENA.pots){ for (const o of P.o) o.visible = false; billboard('pot', 1.05, AX + P.x, 0, P.z, {glow:0.15, flip:P.x < -3}); }
+  if (ART.mango) billboard('mango', 0.6, AX + 42.15, 2.6, -0.05, {glow:0.15});
+  if (ART.palm && ARENA.palms){ const {tr, fr, n} = ARENA.palms; tr.visible = fr.visible = false;
+    const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
+    for (let i = 0; i < n; i++){ tr.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, 0, p.z, s.x, 0, i % 2]); }
+    billboardCrowd(ART.palm2 ? 'palm2' : 'palm', 12, list, {glow:0.12, shadow:false}); }
 }
 
 // =====================================================================
