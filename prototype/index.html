@@ -73,6 +73,7 @@ body.cine .bar{height:11vh}
 .hide{opacity:0!important}
 #controls{position:fixed;inset:0;pointer-events:none;transition:opacity .4s}
 body.cine #controls{opacity:.15}
+body.titled #controls{opacity:0;pointer-events:none}
 #stickZone{position:absolute;left:0;bottom:0;width:46%;height:62%;pointer-events:auto;touch-action:none}
 #stickBase{position:absolute;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;border:1.5px solid rgba(203,191,230,.4);
   background:radial-gradient(circle,rgba(14,9,22,.12),rgba(14,9,22,.45));transition:opacity .25s}
@@ -150,7 +151,7 @@ body.cine #controls{opacity:.15}
 @media (prefers-reduced-motion:reduce){#title .go{animation:none}}
 </style>
 </head>
-<body>
+<body class="titled">
 <div id="rotate"><div><b>▯</b>TURN YOUR PHONE UPRIGHT<br>Shadows of Kanchi is played vertically</div></div>
 <div id="stage">
 <canvas id="c" aria-label="Shadows of Kanchi, Chapter 1 playable slice"></canvas>
@@ -374,9 +375,9 @@ scene.add(bounce);
 
 const skyMat = new THREE.ShaderMaterial({
   side:THREE.BackSide, depthWrite:false, fog:false,
-  uniforms:{ sunDir:{value:TO_SUN.clone()}, time:{value:0}, mem:{value:0} },
+  uniforms:{ sunDir:{value:TO_SUN.clone()}, time:{value:0}, mem:{value:0}, skyTex:{value:null}, useTex:{value:0}, horizonV:{value:0.5}, topE:{value:1.1}, az0:{value:0}, span:{value:2.4} },
   vertexShader:`varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position = p.xyww; }`,
-  fragmentShader:`uniform vec3 sunDir; uniform float time, mem; varying vec3 vDir;
+  fragmentShader:`uniform vec3 sunDir; uniform float time, mem, useTex, horizonV, topE, az0, span; uniform sampler2D skyTex; varying vec3 vDir;
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
     float noise(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.-2.*f);
       return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
@@ -388,6 +389,14 @@ const skyMat = new THREE.ShaderMaterial({
       c = mix(c, zen, smoothstep(.2,.85,e));
       c = mix(c, gnd, smoothstep(.0,-.12,e));
       float s = max(dot(d, sunDir), 0.);
+      if (useTex > .5){
+        // photographed sky: mapped by azimuth and elevation, mirrored around the circle, faded into the gradient overhead
+        float az = atan(d.x, -d.z), u = (az - az0)/span + .5; u = 1. - abs(mod(u, 2.) - 1.);
+        float el = asin(clamp(e, -1., 1.));
+        float v = el >= 0. ? horizonV + (1. - horizonV)*min(el/topE, 1.) : horizonV*max(1. + el/.35, 0.);
+        vec3 im = texture2D(skyTex, vec2(u, v)).rgb*1.1;
+        gl_FragColor = vec4(mix(c, im, 1. - smoothstep(topE*.8, topE, el))*.95, 1.); return;
+      }
       c += vec3(1.,.78,.5)*pow(s,6.)*.45 + vec3(1.,.9,.7)*pow(s,64.)*.8;
       c += vec3(1.,.96,.88)*smoothstep(.99955,.9998,s)*28.;
       // thin high cloud, lit warm
@@ -975,6 +984,7 @@ function buildWorld(){
   const mtm = addMesh(mt.stone, MAT.dark, true, true); mtm.position.set(-4, 0, -30);
   const mtg = addMesh(mt.gold, MAT.gold, false); mtg.position.copy(mtm.position);
   const halo = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 16), MAT.glow); halo.position.set(-4, mt.height - 2, -30); halo.scale.set(1.4, 1, 1.4); scene.add(halo);
+  PROC.mirror = [mtm, mtg]; PROC.halo = halo;
   rngS = 99;
   for (let i = 0; i < 40; i++){ // obsidian shards hanging where the blast left them
     const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.4 + rnd()*0.9), MAT.obsidian);
@@ -986,7 +996,7 @@ function buildWorld(){
   const vA = vimanaGeometry(14, 6), vB = vimanaGeometry(10, 4, {tierH:0.24}), gA = gopuramGeometry(16, 8, 7), gB = gopuramGeometry(11, 6, 5);
   const sky = [[vA,26,-58],[gA,58,-70],[vB,92,-50],[vA,124,-82],[gB,148,-60],[vB,176,-74],[gA,212,-96],[vB,-34,-64],[gB,240,-66],[vA,72,-140],[gA,160,-150],[vB,8,-120],[gB,108,-118],[vA,200,-180]];
   for (const [v, x, z] of sky){ const s = 0.85 + ((x*7)%5)/10; const m = addMesh(v.stone, MAT.mason, false, false); m.position.set(x, -30, z); m.scale.setScalar(s*1.25);
-    const gm = addMesh(v.gold, MAT.gold, false, false); gm.position.copy(m.position); gm.scale.copy(m.scale); }
+    const gm = addMesh(v.gold, MAT.gold, false, false); gm.position.copy(m.position); gm.scale.copy(m.scale); PROC.skyline.push({m, g:gm, x, z, s:s*1.25}); }
   // --- the lower city: houses with terracotta roofs, palms, frozen crowds
   const lower = new THREE.Mesh(new THREE.PlaneGeometry(700, 400), MAT.earth); lower.rotation.x = -Math.PI/2; lower.position.set(90, -30, -130);
   MAT.earth.map.repeat.set(70, 40); MAT.earth.normalMap.repeat.set(70, 40); MAT.earth.roughnessMap.repeat.set(70, 40);
@@ -1003,7 +1013,7 @@ function buildWorld(){
     m4.compose(v3.set(x, -30 + h + 0.55, z), q, sc.set(w*1.12, 1.1, d*0.8)); roofs.setMatrixAt(i, m4);
     col.setHSL(0.025 + rnd()*0.02, 0.5, 0.24 + rnd()*0.07); roofs.setColorAt(i, col);
   }
-  walls.material = MAT.lime; scene.add(walls, roofs);
+  walls.material = MAT.lime; scene.add(walls, roofs); PROC.houses = {walls, roofs, n:HN};
   // dust haze layers: the city sinks into warm air below the palace terraces
   for (const [y, op] of [[-6, 0.22], [-13, 0.35], [-21, 0.5]]){
     const hz = new THREE.Mesh(new THREE.PlaneGeometry(900, 500), new THREE.MeshBasicMaterial({color:0xc4906c, transparent:true, opacity:op, depthWrite:false, fog:true}));
@@ -1034,10 +1044,11 @@ function buildWorld(){
     spots.filter(s => (s[1] < -20) === lower).forEach(s => perPose[Math.floor(s[3]*poses.length)].push(s));
     poses.forEach((p, i) => { const list = perPose[i]; if (!list.length) return; const im = new THREE.InstancedMesh(SG[i], MAT.stone, list.length);
       list.forEach((s, j) => { const sc2 = 0.92 + rnd()*0.16; m4.compose(v3.set(s[0], s[1], s[2]), q.setFromEuler(new THREE.Euler(0, (rnd() - 0.5)*2.4 + (lower ? rnd()*6 : 0), 0)), sc.set(sc2, sc2, sc2)); im.setMatrixAt(j, m4); });
-      im.castShadow = !lower; im.receiveShadow = true; scene.add(im); });
+      im.castShadow = !lower; im.receiveShadow = true; scene.add(im); (lower ? PROC.lowerCrowd : PROC.terraceCrowd).push(im); });
   }
+  PROC.spots = spots;
   // lane statues that matter for play
-  for (const s of LANE_STATUES){ const m = addMesh(statueGeometry(s.pose), MAT.stone); m.position.set(s.x, s.top, s.z); m.rotation.y = Math.PI/2 + 0.2; }
+  for (const s of LANE_STATUES){ const m = addMesh(statueGeometry(s.pose), MAT.stone); m.position.set(s.x, s.top, s.z); m.rotation.y = Math.PI/2 + 0.2; PROC.lane.push(m); }
   // --- elephants
   const ep = elephantParts();
   for (const e of ELEPHANTS.concat([{x:24, z:-5, top:0, bg:1}, {x:57, z:-5.2, top:0, bg:1}, {x:158, z:-5.4, top:0, bg:1}])){
@@ -1050,7 +1061,7 @@ function buildWorld(){
   const rowsZ = [-1.3, -3.9, -6.4];
   const pil = new THREE.InstancedMesh(pg, MAT.stoneBig, pillarsX.length*rowsZ.length); let pi = 0;
   for (const z of rowsZ) for (const x of pillarsX){ m4.compose(v3.set(x, 0, z), q.identity(), sc.set(1,1,1)); pil.setMatrixAt(pi++, m4); }
-  pil.castShadow = pil.receiveShadow = true; scene.add(pil);
+  pil.castShadow = pil.receiveShadow = true; scene.add(pil); PROC.pillars = pil;
   const roof = box(HALL.x1 - HALL.x0, HALL.y1 - HALL.y0, HALL.z1 - HALL.z0); roof.translate((HALL.x0 + HALL.x1)/2, (HALL.y0 + HALL.y1)/2, (HALL.z0 + HALL.z1)/2); worldUV(roof, 4);
   addMesh(roof, MAT.mason);
   for (const x of pillarsX){ const bm = box(0.5, 0.4, HALL.z1 - HALL.z0 - 0.4); bm.translate(x, HALL.y0 - 0.2, (HALL.z0 + HALL.z1)/2); worldUV(bm, 4); addMesh(bm, MAT.mason); }
@@ -1068,9 +1079,9 @@ function buildWorld(){
   const flameG = new THREE.SphereGeometry(0.03, 8, 6); flameG.scale(1, 2.2, 1);
   for (const x of [5, 21, 37, 58, 141.5, 148.7, 155.9, 163.1, 174, 183]){
     const z = x > HALL.x0 && x < HALL.x1 ? -2.6 : -2.2, y = x >= 170 ? 1.3 : 0;
-    const l = addMesh(lampG, MAT.brass); l.position.set(x, y, z);
+    const l = addMesh(lampG, MAT.brass); l.position.set(x, y, z); const LP = {l, flames:[], x, y, z}; PROC.lamps.push(LP);
     if (x > HALL.x0 && x < HALL.x1){ const pl = new THREE.PointLight(0xffa860, 6, 9, 1.6); pl.position.set(x, y + 1.25, z + 0.3); scene.add(pl); }
-    for (let k = 0; k < 5; k++){ const a = k/5*Math.PI*2; const f = addMesh(flameG, MAT.flame, false, false); f.position.set(x + Math.cos(a)*0.19, y + 1.14, z + Math.sin(a)*0.19); f.rotation.z = 0.15; }
+    for (let k = 0; k < 5; k++){ const a = k/5*Math.PI*2; const f = addMesh(flameG, MAT.flame, false, false); f.position.set(x + Math.cos(a)*0.19, y + 1.14, z + Math.sin(a)*0.19); f.rotation.z = 0.15; LP.flames.push(f); }
   }
   // --- static banner on poles
   const bw = BANNER.x1 - BANNER.x0, bh = BANNER.y1 - BANNER.y0;
@@ -1342,7 +1353,7 @@ function showSub(){
 }
 function advance(){
   audio.start();
-  if (state === 'title'){ $('title').classList.add('hide'); startCut(INTRO, 'play'); return; }
+  if (state === 'title'){ $('title').classList.add('hide'); document.body.classList.remove('titled'); startCut(INTRO, 'play'); return; }
   if (state === 'cut'){
     if (cutT < 0.35) return;
     cutI++; cutT = 0;
@@ -1746,18 +1757,19 @@ function makePerson(cloth, extra={}){
   scene.add(r.root); return r;
 }
 
+const ARENA = {};
 function buildArena(){
   if (arenaBuilt) return; arenaBuilt = true;
   MAT.kanakambaram = new THREE.MeshStandardMaterial({color:0xe8701a, roughness:0.8});   // kanakambaram orange
   const sand = new THREE.Mesh(new THREE.PlaneGeometry(200, 90), new THREE.MeshStandardMaterial({color:0xdcb98e, normalMap:MAT.earth.normalMap, normalScale:new THREE.Vector2(0.6, 0.6), roughness:1}));
-  sand.rotation.x = -Math.PI/2; sand.position.set(AX + 20, 0, -20); sand.receiveShadow = true; scene.add(sand);
+  sand.rotation.x = -Math.PI/2; sand.position.set(AX + 20, 0, -20); sand.receiveShadow = true; scene.add(sand); ARENA.sand = sand;
   const wood = MAT.wood, weave = new THREE.MeshStandardMaterial({map:weaveTex(), roughness:0.95, side:THREE.DoubleSide});
   weave.map.wrapS = weave.map.wrapT = THREE.RepeatWrapping; weave.map.repeat.set(12, 1);
   // barricades: timber posts, rails, and woven palm-leaf panels behind the lane; a low rail on the camera side
   const posts = []; for (let x = 0; x <= 46; x += 1.6){ posts.push(place(new THREE.CylinderGeometry(0.08, 0.1, 1.9, 8), AX + x, 0.95, -2.6)); }
   for (const y of [0.55, 1.15, 1.7]) posts.push(place(new THREE.CylinderGeometry(0.05, 0.05, 46, 6), AX + 23, y, -2.6, 0, 0, Math.PI/2));
-  const pm = new THREE.Mesh(merge(posts), wood); pm.castShadow = pm.receiveShadow = true; scene.add(pm);
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(46, 1.5), weave); panel.position.set(AX + 23, 0.85, -2.7); panel.receiveShadow = true; scene.add(panel);
+  const pm = new THREE.Mesh(merge(posts), wood); pm.castShadow = pm.receiveShadow = true; scene.add(pm); ARENA.posts = pm;
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(46, 1.5), weave); panel.position.set(AX + 23, 0.85, -2.7); panel.receiveShadow = true; scene.add(panel); ARENA.panel = panel;
   // stacked bullock-cart platforms for the crowd, and the elders' platform with its canopy
   const plats = [place(box(46, 0.5, 1.8), AX + 23, 0.25, -4.0), place(box(46, 1.1, 1.8), AX + 23, 0.55, -5.9)];
   plats.push(place(box(5, 2.0, 3), AX + 20, 1.0, -6.6));
@@ -1775,7 +1787,7 @@ function buildArena(){
   const leafM = new THREE.MeshStandardMaterial({color:0x3f7a2a, roughness:0.7, side:THREE.DoubleSide});
   const mango = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.06, 0.2), leafM, 30); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1);
   for (let i = 0; i < 30; i++){ const z = -1.4 + i*0.097; m4.compose(v.set(AX + 42.1, 3.15 - Math.sin(i/29*Math.PI)*0.15, z), q.setFromEuler(new THREE.Euler(0, Math.PI/2, 0)), sc); mango.setMatrixAt(i, m4); }
-  scene.add(mango);
+  scene.add(mango); ARENA.gate = [gm, gr, mango];
   const bl = new THREE.MeshStandardMaterial({map:bananaLeafTex(), alphaTest:0.4, side:THREE.DoubleSide, roughness:0.7});
   const trunkM = new THREE.MeshStandardMaterial({color:0x8fa35a, roughness:0.8});
   for (const [x, z] of [[41.8, -1.9], [41.8, 1.9], [-1.5, -2.4]]){
@@ -1806,7 +1818,7 @@ function buildArena(){
   for (let i = 0; i < HN; i++){ const x = AX - 12 + i*3.4 + rnd(), z = -11 - rnd()*6, w = 3 + rnd()*1.5, h = 2.4 + rnd()*0.8;
     m4.compose(v.set(x, h/2, z), q.identity(), sc.set(w, h, 3)); walls.setMatrixAt(i, m4); walls.setColorAt(i, col.setHSL(0.08, 0.3, 0.55 + rnd()*0.15));
     m4.compose(v.set(x, h + 0.45, z), q.identity(), sc.set(w/2.4, 0.5, 0.95)); roofs.setMatrixAt(i, m4); }
-  walls.receiveShadow = roofs.castShadow = true; sc.set(1, 1, 1); scene.add(walls, roofs);
+  walls.receiveShadow = roofs.castShadow = true; sc.set(1, 1, 1); scene.add(walls, roofs); ARENA.houses = {walls, roofs, n:HN};
   const PNum = 14, tr = new THREE.InstancedMesh(PALM.trunk, MAT.trunk, PNum), fr = new THREE.InstancedMesh(PALM.frond, MAT.frond, PNum);
   for (let i = 0; i < PNum; i++){ const s = 0.8 + rnd()*0.4; m4.compose(v.set(AX - 14 + i*5 + rnd()*2, 0, -14 - rnd()*12), q.setFromEuler(new THREE.Euler(0, rnd()*6, 0)), sc.set(s, s, s)); tr.setMatrixAt(i, m4); fr.setMatrixAt(i, m4); }
   sc.set(1, 1, 1); scene.add(tr, fr);
@@ -1836,6 +1848,7 @@ function buildArena(){
     const dr = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 18), MAT.wood); dr.rotation.x = Math.PI/2; dr.position.set(0, 1.15, 0.28); d.root.add(dr); return d; });
   for (const p of [people.veeran, people.headman, people.aditya, ...people.drum]) p.root.scale.setScalar(1.0);
   BULLS.forEach(def => { const b = makeBull(def); b.root.visible = false; scene.add(b.root); bullRigs.push(b); });
+  ARENA.spots = spots; artReady.then(applyArenaArt);
 }
 
 function setBtnMode(mode){
@@ -1848,7 +1861,7 @@ function enterArena(){
   try { jkBest = +(localStorage.getItem('kanchi-jk-best') || 0); } catch(e){ jkBest = 0; }
   SAVED.sunCol = sun.color.getHex(); SAVED.sunI = sun.intensity; SAVED.hemiC = hemi.color.getHex(); SAVED.hemiG = hemi.groundColor.getHex(); SAVED.fogC = scene.fog.color.getHex(); SAVED.fogD = scene.fog.density; SAVED.hemiI = hemi.intensity; hemi.intensity = 1.15;
   sun.color.set(0xffd29c); sun.intensity = 3.4; hemi.color.set(0xa8b8dc); hemi.groundColor.set(0xc8945e); scene.fog.color.set(0xd8b48e); scene.fog.density = 0.0055;
-  skyMat.uniforms.sunDir.value.copy(SUN_JK); skyMat.uniforms.mem.value = 1; grade.uniforms.mem.value = 1;
+  skyMat.uniforms.sunDir.value.copy(SUN_JK); skyMat.uniforms.mem.value = 1; setSky('skyPongal', 0.115, 1.0, 0.27, SUN_JK, 2.2); grade.uniforms.mem.value = 1;
   setBtnMode('jk'); $('hud').classList.add('hide'); sHint.style.opacity = 0;
   // young Ilan stands at the barricade, ready
   ilan.root.scale.setScalar(0.95); ilan.tilt.rotation.set(0, 0, 0); ilan.tilt.position.set(0, 0, 0); ilan.lie = 0;
@@ -1858,7 +1871,7 @@ function enterArena(){
 function exitArena(){
   if (!inArena) return; inArena = false; jk = null;
   sun.color.setHex(SAVED.sunCol); sun.intensity = SAVED.sunI; hemi.color.setHex(SAVED.hemiC); hemi.groundColor.setHex(SAVED.hemiG); scene.fog.color.setHex(SAVED.fogC); scene.fog.density = SAVED.fogD; hemi.intensity = SAVED.hemiI;
-  skyMat.uniforms.sunDir.value.copy(TO_SUN); skyMat.uniforms.mem.value = 0; grade.uniforms.mem.value = 0;
+  skyMat.uniforms.sunDir.value.copy(TO_SUN); skyMat.uniforms.mem.value = 0; setSky('skyNoon', 0.5, 1.15, 0.5, TO_SUN, 2.4); grade.uniforms.mem.value = 0;
   setBtnMode('play'); ilan.root.scale.setScalar(1); ilan.tilt.rotation.set(0, 0, 0); $('jkhud').className = ''; $('jkring').style.opacity = 0;
   for (const b of bullRigs) b.root.visible = false;
 }
@@ -2041,6 +2054,123 @@ function jkVisuals(dt){
 }
 
 // =====================================================================
+// Generated art (Gemini reference sheets, textures and skies). Each piece replaces a code-built
+// placeholder once it loads; if a file is missing, the placeholder simply stays.
+// Billboards work here because the camera always looks at the world side-on.
+// =====================================================================
+const ART_DIR = 'assets/';
+const ART = {};
+const ART_FILES = {
+  mirror:'billboards/ARC-01_mirror-temple_front.webp', gopuram:'billboards/ARC-02_gopuram_front.webp', vimana:'billboards/ARC-03_vimana-shrine_front.webp',
+  pillar:'billboards/ARC-04_pillar_front.webp', gate:'billboards/ARC-06_vaadivaasal_side.webp', hut:'billboards/ARC-07_village-house_front.webp',
+  townhouse:'billboards/ARC-08_town-house_front.webp', fence:'billboards/ARC-09_barricade_front.webp', lamp:'billboards/PRP-01_kuthuvilakku_front.webp',
+  crw01:'billboards/CRW-01_man-cheering_front.webp', crw02:'billboards/CRW-02_man-leaning_front.webp', crw03:'billboards/CRW-03_woman-clapping_front.webp',
+  crw05:'billboards/CRW-05_father-and-son_front.webp', crw06:'billboards/CRW-06_girl-pointing_front.webp', crw07:'billboards/CRW-07_elder-with-stick_front.webp',
+  crw08:'billboards/CRW-08_youth-whistling_front.webp', crw09:'billboards/CRW-09_woman-with-baby_front.webp', crw10:'billboards/CRW-10_bull-tamer_front.webp',
+  ashlar:'tex/TEX-01_granite-ashlar.jpg', flag:'tex/TEX-02_flagstone.jpg', earth:'tex/TEX-05_arena-earth.jpg',
+  skyNoon:'sky/SKY-01_stopped-noon.jpg', skyPongal:'sky/SKY-02_pongal-morning.jpg'
+};
+// height in metres of each person or object as drawn (raised arms included)
+const CROWD = [['crw01', 2.15], ['crw02', 1.7], ['crw03', 2.0], ['crw05', 2.55], ['crw06', 1.28], ['crw07', 1.62], ['crw08', 2.12], ['crw09', 1.62]];
+const PROC = {skyline:[], terraceCrowd:[], lowerCrowd:[], lane:[], lamps:[]};
+const texLoader = new THREE.TextureLoader();
+const artReady = Promise.all(Object.entries(ART_FILES).map(([k, f]) => new Promise(res => texLoader.load(ART_DIR + f,
+  t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; ART[k] = t; res(); }, undefined, () => res()))));
+
+// A height map from the photo's brightness gives the new stone and earth real relief under the moving sun.
+function normalFromImage(img, strength=3, size=512){
+  const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); g.drawImage(img, 0, 0, size, size);
+  const src = g.getImageData(0, 0, size, size).data, H = new Float32Array(size*size);
+  for (let i = 0; i < size*size; i++) H[i] = (src[i*4]*0.3 + src[i*4+1]*0.59 + src[i*4+2]*0.11)/255;
+  const out = g.createImageData(size, size), N = size;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+    const l = H[y*N + (x-1+N)%N], r = H[y*N + (x+1)%N], u = H[((y-1+N)%N)*N + x], d = H[((y+1)%N)*N + x];
+    const nx = -(r - l)*strength, ny = (d - u)*strength, L = Math.hypot(nx, ny, 1), i = (y*N + x)*4;
+    out.data[i] = (nx/L*.5+.5)*255; out.data[i+1] = (ny/L*.5+.5)*255; out.data[i+2] = (1/L*.5+.5)*255; out.data[i+3] = 255;
+  }
+  g.putImageData(out, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = ANISO; return t;
+}
+function useSurface(mat, tex, repeat=1, strength=3){
+  tex = tex.clone(); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(repeat, repeat); tex.needsUpdate = true;
+  const n = normalFromImage(tex.image, strength); n.repeat.set(repeat, repeat);
+  mat.map = tex; mat.normalMap = n; mat.roughnessMap = null; mat.roughness = 0.88; mat.color.set(0xffffff); mat.needsUpdate = true;
+}
+const bbGeo = {};
+function bbGeometry(key, h){
+  const id = key + h; if (bbGeo[id]) return bbGeo[id];
+  const img = ART[key].image, w = h*img.width/img.height, g = new THREE.PlaneGeometry(w, h); g.translate(0, h/2, 0); return bbGeo[id] = g;
+}
+// stone: the curse's look, granite with the photo's shading kept
+function bbMaterial(key, opt={}){
+  const m = new THREE.MeshStandardMaterial({map:ART[key], alphaTest:0.5, side:THREE.DoubleSide, roughness:0.9, metalness:0});
+  if (opt.stone){
+    m.emissive = new THREE.Color(0.05, 0.045, 0.045);
+    m.onBeforeCompile = s => { s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>',
+      '#include <map_fragment>\n float lum = dot(diffuseColor.rgb, vec3(.299,.587,.114)); diffuseColor.rgb = pow(mix(vec3(lum), diffuseColor.rgb, .1), vec3(1.15))*vec3(.82,.74,.68) + vec3(.03,.025,.02);'); };
+  } else { m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = ART[key]; m.emissiveIntensity = opt.glow ?? 0.18; }
+  return m;
+}
+function billboard(key, h, x, y, z, opt={}){
+  const mesh = new THREE.Mesh(bbGeometry(key, h), bbMaterial(key, opt)); mesh.position.set(x, y, z);
+  if (opt.flip) mesh.scale.x = -1; mesh.castShadow = opt.shadow ?? true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
+}
+// many people of one kind in one draw call
+function billboardCrowd(key, h, list, opt={}){
+  const im = new THREE.InstancedMesh(bbGeometry(key, h), bbMaterial(key, opt), list.length), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), s = new THREE.Vector3();
+  list.forEach((p, j) => { const k = p[3]; m4.compose(v.set(p[0], p[1], p[2]), q.setFromEuler(new THREE.Euler(0, p[4] || 0, 0)), s.set(k*(p[5] ? -1 : 1), k, k)); im.setMatrixAt(j, m4); });
+  im.castShadow = opt.shadow ?? true; im.receiveShadow = true; scene.add(im); return im;
+}
+function setSky(key, horizonV, topE, imgSunU, sunDir, span){
+  const u = skyMat.uniforms; if (!ART[key]){ u.useTex.value = 0; return; }
+  u.skyTex.value = ART[key]; u.useTex.value = 1; u.horizonV.value = horizonV; u.topE.value = topE; u.span.value = span;
+  u.az0.value = Math.atan2(sunDir.x, -sunDir.z) - (imgSunU - 0.5)*span;
+}
+function applyWorldArt(){
+  if (ART.ashlar){ useSurface(MAT.mason, ART.ashlar, 1, 3); useSurface(MAT.stoneBig, ART.ashlar, 1, 3); }
+  if (ART.flag) useSurface(MAT.flag, ART.flag, 1, 2.5);
+  setSky('skyNoon', 0.5, 1.15, 0.5, TO_SUN, 2.4);
+  if (ART.mirror){ for (const m of PROC.mirror) m.visible = false; const H = 62; billboard('mirror', H, -4, 0, -30, {glow:0.08, shadow:false}); PROC.halo.visible = false;
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({map:softDot(), color:new THREE.Color(1.4, 0.9, 2.8), transparent:true, opacity:0.55, depthWrite:false, blending:THREE.AdditiveBlending}));
+    glow.position.set(-4, H*0.96, -29.5); glow.scale.set(26, 26, 1); scene.add(glow); }
+  if (ART.gopuram && ART.vimana) PROC.skyline.forEach((o, i) => { o.m.visible = o.g.visible = false;
+    const gop = i % 2 === 0, h = (gop ? 34 : 22)*o.s; billboard(gop ? 'gopuram' : 'vimana', h*0.85, o.x, -30, o.z - 12, {glow:0.03, shadow:false}); });
+  if (ART.townhouse && PROC.houses){ const {walls, roofs, n} = PROC.houses; walls.visible = roofs.visible = false;
+    const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
+    for (let i = 0; i < n; i++){ walls.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, -30, p.z, 0.85 + (i % 5)*0.08, 0, i % 2]); }
+    billboardCrowd('townhouse', 5.2, list, {glow:0.12, shadow:false}); }
+  // the frozen crowd: real people, turned to stone
+  if (CROWD.every(([k]) => ART[k]) && PROC.spots){
+    for (const im of PROC.terraceCrowd.concat(PROC.lowerCrowd)) im.visible = false;
+    const per = CROWD.map(() => []);
+    PROC.spots.forEach((sp, i) => { const t = Math.floor(sp[3]*CROWD.length) % CROWD.length; per[t].push([sp[0], sp[1], sp[2], 0.92 + ((i*37) % 17)/100, 0, i % 3 === 0]); });
+    per.forEach((list, t) => { if (list.length) billboardCrowd(CROWD[t][0], CROWD[t][1], list, {stone:true, shadow:list[0][1] > -20}); });
+    const laneKeys = ['crw01', 'crw03', 'crw08', 'crw07'];
+    PROC.lane.forEach((m, i) => { m.visible = false; const k = laneKeys[i % laneKeys.length], h = CROWD.find(c => c[0] === k)[1]; billboard(k, h*0.92, m.position.x, m.position.y, m.position.z, {stone:true}); });
+  }
+  if (ART.pillar && PROC.pillars){ const pil = PROC.pillars; pil.visible = false; const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
+    for (let i = 0; i < pil.count; i++){ pil.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, 0, p.z, 1]); }
+    billboardCrowd('pillar', HALL.y0, list, {glow:0.1}); }
+  if (ART.lamp) for (const L of PROC.lamps){ L.l.visible = false; L.flames.forEach(f => f.visible = false); billboard('lamp', 1.45, L.x, L.y, L.z, {glow:0.35, shadow:false}); }
+}
+function applyArenaArt(){
+  if (ART.earth && ARENA.sand){ const m = ARENA.sand.material; useSurface(m, ART.earth, 30, 2.5); m.map.repeat.set(30, 14); m.normalMap.repeat.set(30, 14); m.color.set(0xffffff); }
+  if (ART.fence){ ARENA.posts.visible = ARENA.panel.visible = false;
+    const h = 2.0, w = h*ART.fence.image.width/ART.fence.image.height; for (let x = 0.2; x < 46; x += w*0.97) billboard('fence', h, AX + x + w/2, 0, -2.6, {glow:0.12}); }
+  if (ART.gate){ for (const o of ARENA.gate) o.visible = false; billboard('gate', 3.9, AX + 45.2, 0, -1.5, {glow:0.12}); }
+  if (ART.hut && ARENA.houses){ const {walls, roofs, n} = ARENA.houses; walls.visible = roofs.visible = false;
+    const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
+    for (let i = 0; i < n; i++){ walls.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, 0, p.z, 0.9 + (i % 4)*0.07, 0, i % 2]); }
+    billboardCrowd('hut', 4.2, list, {glow:0.12}); }
+  if (CROWD.every(([k]) => ART[k]) && ARENA.spots){
+    for (const c of crowd) c.grp.visible = false; crowd.length = 0;
+    const per = CROWD.map(() => []);
+    ARENA.spots.forEach((sp, i) => per[i % CROWD.length].push([AX + sp[0], sp[1], sp[2], 0.9 + ((i*31) % 13)/100, 0, (i >> 1) % 2]));
+    per.forEach((list, t) => { const im = billboardCrowd(CROWD[t][0], CROWD[t][1], list, {glow:0.16}); const grp = new THREE.Group(); scene.remove(im); grp.add(im); scene.add(grp); crowd.push({grp, ph:t*1.3}); });
+  }
+  if (ART.crw10) for (const x of [28.5, 33, 37.6]) billboard('crw10', 1.45, AX + x, 0, -2.05, {glow:0.16, flip:x > 33});
+}
+
+// =====================================================================
 // Audio: a low drone in the stopped city, and a few sounds made from filtered noise
 // =====================================================================
 const audio = {
@@ -2114,11 +2244,12 @@ function frame(now){
 }
 window.__kanchi = { get frames(){ return frames; }, get P(){ return P; }, get state(){ return state; }, get shadows(){ return shadows; }, get target(){ return target; }, get walkers(){ return walkers; },
   advance, held, pressed, CANOPIES, get jk(){ return jk; }, get jkScore(){ return jkScore; }, toArena(){ $('title').classList.add('hide'); enterArena(); $('sub').className = ''; document.body.classList.remove('cine'); state = 'jk'; startBull(0); }, startBull(i){ startBull(i); }, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
-  skipToPlay(){ $('title').classList.add('hide'); $('sub').className = ''; document.body.classList.remove('cine'); state = 'play'; $('hud').classList.remove('hide'); },
+  skipToPlay(){ document.body.classList.remove('titled'); $('title').classList.add('hide'); $('sub').className = ''; document.body.classList.remove('cine'); state = 'play'; $('hud').classList.remove('hide'); },
   place(x, y, face=1){ P.x = x; P.y = y; P.vx = P.vy = 0; P.face = face; camPos.set(x, y + 2.5, 13); camLook.set(x, y + 1, 0); camPosT.copy(camPos); camLookT.copy(camLook); } };
 
 requestAnimationFrame(() => setTimeout(() => {
   buildMaterials(); buildProxies(); buildWorld(); buildMemories(); newGame();
+  artReady.then(applyWorldArt);
   $('hud').classList.add('hide');
   state = 'title'; $('loading').classList.add('hide'); setTimeout(() => $('loading').style.display = 'none', 900);
   last = performance.now(); requestAnimationFrame(frame);
