@@ -1142,7 +1142,7 @@ function buildWorld(){
     canopyMeshes.push({cloth, roll, rope, c});
   }
   // --- Aditya on the dais, crown half-raised; priests around him
-  const dais = box(4, 0.4, 3); dais.translate(178.5, 1.5, -1.6); worldUV(dais, 4); addMesh(dais, MAT.flag);
+  const dais = box(4, 0.4, 3); dais.translate(178.5, 1.5, -1.6); worldUV(dais, 4); PROC.dais = addMesh(dais, MAT.flag);
   const ad = addMesh(statueGeometry('crown', 1.03), MAT.stone); ad.position.set(178.5, 1.7, -1.2); ad.rotation.y = -Math.PI/2 + 0.35;
   adityaCrown = addMesh(lathe([[0.11,0],[0.12,0.02],[0.11,0.08],[0.13,0.14],[0.08,0.2],[0.05,0.26],[0,0.32]], 16), MAT.gold);
   adityaCrown.position.set(178.5 - 0.28, 1.7 + 2.0, -1.2 + 0.1);
@@ -1823,7 +1823,7 @@ function buildArena(){
   // stacked bullock-cart platforms for the crowd, and the elders' platform with its canopy
   const plats = [place(box(46, 0.5, 1.8), AX + 23, 0.25, -4.0), place(box(46, 1.1, 1.8), AX + 23, 0.55, -5.9)];
   plats.push(place(box(5, 2.0, 3), AX + 20, 1.0, -6.6));
-  const plm = new THREE.Mesh(merge(plats), wood); plm.castShadow = plm.receiveShadow = true; scene.add(plm);
+  const plm = new THREE.Mesh(merge(plats), wood); plm.castShadow = plm.receiveShadow = true; scene.add(plm); ARENA.platforms = plm;
   const can = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 3.2), MAT.canopy); can.rotation.x = -Math.PI/2; can.position.set(AX + 20, 4.6, -6.6); ARENA.canopy = can; can.castShadow = true; scene.add(can);
   for (const [x, z] of [[17.4, -5.2], [22.6, -5.2], [17.4, -8], [22.6, -8]]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), wood); p.position.set(AX + x, 3.3, z); scene.add(p); }
   // the vaadivaasal: a narrow timber gate with a thatched roof, mango leaves and banana plants
@@ -2143,7 +2143,9 @@ const ART_FILES = {
   riceThrower:'billboards/CRW-11_rice-thrower_side.webp', flowerGirl:'billboards/CRW-12_flower-girl_front.webp', odhuvar:'billboards/CRW-13_odhuvar_front.webp', server:'billboards/CRW-14_server_side.webp',
   pot:'billboards/PRP-02_pongal-pot_front.webp', cane:'billboards/PRP-03_sugarcane_front.webp', banana:'billboards/PRP-04_banana_front.webp', palm:'billboards/PRP-05_coconut-palm_front.webp',
   palm2:'billboards/PRP-05_coconut-palm_side.webp', ropePost:'billboards/PRP-09_rope-post_front.webp', cart:'billboards/PRP-13_bullock-cart_side.webp', mango:'billboards/PRP-14_mango-leaves_front.webp',
-  feast:'billboards/PRP-12_feast-leaf_front.webp', crown:'billboards/PRP-10_crown_front.webp', canopy:'billboards/PRP-06_canopy_front.webp', lampSet:'billboards/PRP-15_lamps_back.webp', thavil:'billboards/PRP-08_thavil_side.webp', teak:'tex/MAT-teak.jpg', coin:'billboards/PRP-11_coin-cloth_front.webp', bannerCloth:'tex/PRP-07_banner-cloth.jpg'
+  feast:'billboards/PRP-12_feast-leaf_front.webp', crown:'billboards/PRP-10_crown_front.webp', canopy:'billboards/PRP-06_canopy_front.webp', lampSet:'billboards/PRP-15_lamps_back.webp', thavil:'billboards/PRP-08_thavil_side.webp', teak:'tex/MAT-teak.jpg', charnockite:'tex/MAT-charnockite.jpg', graniteSun:'tex/MAT-granite-sun.jpg', graniteShade:'tex/MAT-granite-shade.jpg',
+  statueCloth:'tex/MAT-statue-cloth.jpg', earthHoof:'tex/MAT-earth-hoof.jpg', flagOld:'tex/MAT-flagstone-old.jpg', roofTile:'tex/MAT-roof-tile.jpg',
+  plaster:'tex/MAT-plaster-brick.jpg', thatch:'tex/MAT-thatch.jpg', weave:'tex/MAT-palm-weave.jpg', parai:'billboards/PRP-08_parai_front.webp', coin:'billboards/PRP-11_coin-cloth_front.webp', bannerCloth:'tex/PRP-07_banner-cloth.jpg'
 };
 // height in metres of each person or object as drawn (raised arms included)
 const CROWD = [['crw01', 2.15], ['crw02', 1.7], ['crw03', 2.0], ['crw04', 1.58], ['crw05', 2.55], ['crw06', 1.28], ['crw07', 1.62], ['crw08', 2.12], ['crw09', 1.62]];
@@ -2210,9 +2212,12 @@ function applyWorldArt(){
   if (ART.gopuram && ART.vimana) PROC.skyline.forEach((o, i) => { o.m.visible = o.g.visible = false;
     const gop = i % 2 === 0, h = (gop ? 34 : 22)*o.s; billboard(gop ? 'gopuram' : 'vimana', h*0.85, o.x, -30, o.z - 12, {glow:0.03, shadow:false}); });
   if (ART.townhouse && PROC.houses){ const {walls, roofs, n} = PROC.houses; walls.visible = roofs.visible = false;
+    const farOnly = () => { const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), z0 = new THREE.Matrix4().makeScale(0, 0, 0);
+      for (let i = 0; i < n; i++){ walls.getMatrixAt(i, m4); m4.decompose(p, q, sc); if (p.z > -62){ walls.setMatrixAt(i, z0); roofs.setMatrixAt(i, z0); } }
+      walls.instanceMatrix.needsUpdate = roofs.instanceMatrix.needsUpdate = true; walls.visible = roofs.visible = true; };
     const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
     for (let i = 0; i < n; i++){ walls.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, -30, p.z, 0.85 + (i % 5)*0.08, 0, i % 2]); }
-    billboardCrowd('townhouse', 5.2, list, {glow:0.12, shadow:false}); }
+    billboardCrowd('townhouse', 5.2, list.filter(l => l[2] > -62), {glow:0.12, shadow:false}); farOnly(); }
   // the frozen crowd: real people, turned to stone
   if (CROWD.every(([k]) => ART[k]) && PROC.spots){
     for (const im of PROC.terraceCrowd.concat(PROC.lowerCrowd)) im.visible = false;
@@ -2241,6 +2246,15 @@ function applyWorldArt(){
   }
   if (ART.crown && adityaCrown){ adityaCrown.visible = false; billboard('crown', 0.42, adityaCrown.position.x, adityaCrown.position.y - 0.08, adityaCrown.position.z + 0.15, {glow:0.35, shadow:false}); }
   if (ART.teak) useSurface(MAT.wood, ART.teak, 1, 2);
+  if (ART.charnockite) useSurface(MAT.dark, ART.charnockite, 1, 3);           // the dark end walls
+  if (ART.statueCloth) useSurface(MAT.stone, ART.statueCloth, 1, 2);          // carved-cloth granite on the stone prince and priests
+  if (ART.graniteShade) useSurface(MAT.stoneBig, ART.graniteShade, 1, 3);     // fallen pillar and rubble
+  if (ART.earthHoof){ useSurface(MAT.earth, ART.earthHoof, 1, 2); for (const t of [MAT.earth.map, MAT.earth.normalMap]) t.repeat.set(70, 40); }   // the streets far below
+  if (ART.flagOld && PROC.dais){ const m = new THREE.MeshStandardMaterial(); useSurface(m, ART.flagOld, 1, 2.5); PROC.dais.material = m; }   // Aditya's dais
+  // the far half of the lower city stays as solid houses, now in real tile and plaster; the near half are your house images
+  if (ART.roofTile && ART.plaster && PROC.houses){ const {walls, roofs} = PROC.houses;
+    const wm = new THREE.MeshStandardMaterial({roughness:0.95}), rm = new THREE.MeshStandardMaterial({roughness:0.9}); useSurface(wm, ART.plaster, 1, 2); useSurface(rm, ART.roofTile, 1, 2);
+    walls.material = wm; roofs.material = rm; PROC.housesKeepFar = true; }
   if (ART.bannerCloth){ const t = ART.bannerCloth; t.colorSpace = THREE.SRGBColorSpace; MAT.banner.map = t; MAT.banner.needsUpdate = true; }
   if (ART.ropePost) for (const P of PROC.posts){ P.post.visible = P.fin.visible = false; billboard('ropePost', 2.4, P.x, 0, -0.6, {glow:0.12}); }
   if (ART.palm && PROC.palms){ const {trunks, fronds, n} = PROC.palms; trunks.visible = fronds.visible = false;
@@ -2341,6 +2355,12 @@ function applyArenaArt(){
   if (ART.canopy && ARENA.canopy){ ARENA.canopy.visible = false; billboard('canopy', 2.7, AX + 20, 2.0, -6.9, {glow:0.15, shadow:false}); }
   if (ART.lampSet) for (const [x, z] of [[-3.3, 0.2], [39.2, 2.3]]) billboard('lampSet', 0.55, AX + x, 0, z, {glow:0.3, shadow:false});
   if (ART.thavil) billboard('thavil', 0.5, AX + 31.9, 0.5, -4.5, {glow:0.15});
+  if (ART.parai) billboard('parai', 0.42, AX + 29.4, 0.5, -4.5, {glow:0.15});
+  if (ART.weave && ARENA.platforms){ const m = new THREE.MeshStandardMaterial({roughness:0.95}); useSurface(m, ART.weave, 1, 2); ARENA.platforms.material = m; }   // mats laid over the spectator carts
+  if (ART.thatch){ // a thatched shelter over the Pongal hearths
+    const m = new THREE.MeshStandardMaterial({roughness:1, side:THREE.DoubleSide}); useSurface(m, ART.thatch, 1, 2.5); m.map.repeat.set(2, 1); m.normalMap.repeat.set(2, 1);
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 2.6), m); roof.rotation.x = -Math.PI/2 + 0.25; roof.position.set(AX - 4.3, 2.4, -0.2); roof.castShadow = roof.receiveShadow = true; scene.add(roof);
+    for (const [x, z] of [[-6.3, -1.3], [-2.3, -1.3], [-6.3, 0.9], [-2.3, 0.9]]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.6, 8), MAT.wood); p.position.set(AX + x, 1.2, z); p.castShadow = true; scene.add(p); } }
   if (ART.coin) $('jkres').querySelector('.coin').src = ART_DIR + ART_FILES.coin;
   if (ART.palm && ARENA.palms){ const {tr, fr, n} = ARENA.palms; tr.visible = fr.visible = false;
     const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
@@ -2362,11 +2382,11 @@ const RAGAS = {
   shanmukhapriya:[0, 2, 3, 6, 7, 8, 10]      // the chase: urgent
 };
 const MOODS = {
-  title: {raga:'kalyani', bpm:62, tanpura:1, veena:0.9, nadas:0.5, thavil:0, kombu:1},
-  noon:  {raga:'shubhapantuvarali', bpm:54, tanpura:1, veena:0.75, nadas:0, thavil:0},
-  chase: {raga:'shanmukhapriya', bpm:132, tanpura:0.8, veena:0, nadas:0.7, thavil:1},
-  pongal:{raga:'mohanam', bpm:116, tanpura:0.8, veena:0, nadas:1, thavil:0.7},
-  end:   {raga:'shubhapantuvarali', bpm:46, tanpura:0.9, veena:1, nadas:0, thavil:0}
+  title: {raga:'kalyani', bpm:62, tanpura:1, veena:0.6, nadas:0.4, thavil:0, kombu:1, choir:1, strings:0.8, war:0.9, voice:0},
+  noon:  {raga:'shubhapantuvarali', bpm:54, tanpura:1, veena:0.7, nadas:0, thavil:0, choir:0.35, strings:0.5, war:0, voice:0.7},
+  chase: {raga:'shanmukhapriya', bpm:132, tanpura:0.7, veena:0, nadas:0.6, thavil:1, choir:0.8, strings:0.9, war:1, voice:0},
+  pongal:{raga:'mohanam', bpm:116, tanpura:0.8, veena:0, nadas:1, thavil:0.7, choir:0, strings:0.3, war:0, voice:0},
+  end:   {raga:'shubhapantuvarali', bpm:46, tanpura:0.9, veena:0.8, nadas:0, thavil:0, choir:0.5, strings:0.8, war:0, voice:1}
 };
 const SA = 146.83;   // D3
 const music = {
@@ -2378,7 +2398,7 @@ const music = {
     for (const [dt, fb] of [[0.137, 0.45], [0.211, 0.4]]){ const d = C.createDelay(1); d.delayTime.value = dt; const g = C.createGain(); g.gain.value = fb; const lp = C.createBiquadFilter(); lp.frequency.value = 2400;
       d.connect(lp); lp.connect(g); g.connect(d); lp.connect(wet); this.revIn = this.revIn || C.createGain(); this.revIn.connect(d); }
     this.bus = {};
-    for (const k of ['tanpura', 'veena', 'nadas', 'thavil', 'kombu']){ const g = C.createGain(); g.gain.value = 0; g.connect(this.out); g.connect(this.revIn); this.bus[k] = g; }
+    for (const k of ['tanpura', 'veena', 'nadas', 'thavil', 'kombu', 'choir', 'strings', 'war', 'voice']){ const g = C.createGain(); g.gain.value = 0; g.connect(this.out); g.connect(this.revIn); this.bus[k] = g; }
   },
   freq(deg){ const R = RAGAS[MOODS[this.mood].raga], n = R.length, o = Math.floor(deg/n), i = ((deg % n) + n) % n; return SA*Math.pow(2, (R[i] + 12*o)/12); },
   set(mood){
@@ -2399,6 +2419,9 @@ const music = {
       if (M.veena && s % 2 === 0 && Math.random() < 0.55) this.veena(t, this.walk(0.35));
       if (M.nadas && s % 4 === 0) this.nadas(t, this.walk(0.5), beat*(Math.random() < 0.3 ? 4 : 2));
       if (M.thavil) this.thavil(t, s);
+      if (M.war) this.war(t, s);
+      if (s % 16 === 0){ const root = [0, 0, 5, 3][(s/16) % 4]; if (M.choir) this.choir(t, root, beat*8); if (M.strings) this.strings(t, root, beat*8); }
+      if (M.voice && s % 16 === 8 && Math.random() < 0.6) this.voice(t, beat);
       this.next += sub;
     }
   },
@@ -2450,6 +2473,41 @@ const music = {
     f.type = 'bandpass'; f.frequency.value = c === 'X' ? 900 : 2600; f.Q.value = 1.6;
     g.gain.setValueAtTime(c === 'X' ? 0.12 : 0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
     n.connect(f); f.connect(g); g.connect(this.bus.thavil); n.start(t, Math.random()); n.stop(t + 0.08);
+  },
+  // male choir on an open "aa": sawtooth voices through vowel formants
+  choir(t, root, dur){
+    const C = this.C;
+    for (const [deg, oct] of [[root, -1], [root + 4, -1], [root, 0]]){
+      const f = this.freq(deg)*Math.pow(2, oct), mix = C.createGain(); mix.gain.value = 0;
+      for (const d of [-9, 0, 8]){ const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d; o.connect(mix); o.start(t); o.stop(t + dur + 0.1); }
+      for (const [fc, q, a] of [[700, 6, 1], [1220, 8, 0.5], [2600, 10, 0.25]]){ const bp = C.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fc; bp.Q.value = q; const g = C.createGain(); g.gain.value = a*0.05; mix.connect(bp); bp.connect(g); g.connect(this.bus.choir); }
+      mix.gain.setValueAtTime(0, t); mix.gain.linearRampToValueAtTime(1, t + dur*0.35); mix.gain.linearRampToValueAtTime(0, t + dur);
+    }
+  },
+  // strings: a slow swell under everything
+  strings(t, root, dur){
+    const C = this.C, lp = C.createBiquadFilter(), g = C.createGain(); lp.frequency.setValueAtTime(500, t); lp.frequency.linearRampToValueAtTime(1800, t + dur*0.5); lp.frequency.linearRampToValueAtTime(600, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.035, t + dur*0.5); g.gain.linearRampToValueAtTime(0, t + dur); lp.connect(g); g.connect(this.bus.strings);
+    for (const [deg, oct] of [[root, 0], [root + 2, 0], [root + 4, 0], [root, 1]]) for (const d of [-6, 6]){
+      const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = this.freq(deg)*Math.pow(2, oct); o.detune.value = d; o.connect(lp); o.start(t); o.stop(t + dur + 0.1); }
+  },
+  // war drums: big, slow, felt in the chest
+  war(t, s){
+    const pat = this.mood === 'chase' ? 'X...X.X.X...X.XX' : 'X.......X...X...'; if (pat[s % pat.length] !== 'X') return;
+    const C = this.C, o = C.createOscillator(), g = C.createGain(); o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.5);
+    g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.9); o.connect(g); g.connect(this.bus.war); o.start(t); o.stop(t + 0.95);
+    const n = C.createBufferSource(), lp = C.createBiquadFilter(), ng = C.createGain(); n.buffer = audio.noise; lp.type = 'lowpass'; lp.frequency.value = 400;
+    ng.gain.setValueAtTime(0.25, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.25); n.connect(lp); lp.connect(ng); ng.connect(this.bus.war); n.start(t, Math.random()); n.stop(t + 0.3);
+  },
+  // a woman's voice, wordless, carrying a short phrase of the raga
+  voice(t, beat){
+    const C = this.C, notes = [this.walk(0.3), this.walk(0.3), this.walk(0.3)], o = C.createOscillator(), vib = C.createOscillator(), vg = C.createGain(), g = C.createGain();
+    o.type = 'triangle'; vib.frequency.value = 5.2; vg.gain.value = 0; vib.connect(vg); vg.connect(o.frequency);
+    let tt = t; notes.forEach((d, i) => { const f = this.freq(d + 7); if (i === 0) o.frequency.setValueAtTime(f, tt); else o.frequency.exponentialRampToValueAtTime(f, tt + 0.18); tt += beat*1.5; });
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(this.freq(7)*0.015, t + 0.6);
+    const f1 = C.createBiquadFilter(); f1.type = 'peaking'; f1.frequency.value = 900; f1.gain.value = 8; f1.Q.value = 2;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.07, t + 0.3); g.gain.setValueAtTime(0.07, tt - 0.4); g.gain.linearRampToValueAtTime(0, tt);
+    o.connect(f1); f1.connect(g); g.connect(this.bus.voice); o.start(t); vib.start(t); o.stop(tt + 0.05); vib.stop(tt + 0.05);
   },
   // kombu: the long curved horn that announces a king
   kombu(t){

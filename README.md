@@ -59,11 +59,11 @@ The game has its own original score, generated live in the browser (no audio fil
 
 | Scene | Raga | Instruments |
 |---|---|---|
-| Title and opening | Kalyani (grand, royal) | Tanpura, veena, nadaswaram, kombu horn fanfare |
-| The stopped city | Shubhapantuvarali (grief, stillness) | Tanpura, sparse veena with gamakas |
-| Hall chase | Shanmukhapriya (urgent) | Tanpura, nadaswaram, fast thavil |
+| Title and opening | Kalyani (grand, royal) | Male choir, war drums, string swells, kombu horn fanfare, tanpura, veena |
+| The stopped city | Shubhapantuvarali (grief, stillness) | Tanpura, sparse veena, a wordless female voice, soft choir |
+| Hall chase | Shanmukhapriya (urgent) | War drums, fast thavil, choir, strings, nadaswaram |
 | Jallikattu | Mohanam (bright, festive) | Tanpura, nadaswaram, thavil, parai |
-| Ending | Shubhapantuvarali, slower | Tanpura, veena |
+| Ending | Shubhapantuvarali, slower | Female voice, veena, strings, choir |
 
 Copyrighted film soundtracks (such as *Ponniyin Selvan*) can't be included. Licensed recordings you own the rights to can be dropped in later as audio files.
 
