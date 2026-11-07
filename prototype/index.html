@@ -47,6 +47,10 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
 body.cine .bar{height:11vh}
 #sub{position:fixed;left:50%;bottom:calc(11vh + 18px);transform:translateX(-50%);width:min(760px,calc(100% - 32px));text-align:center;opacity:0;transition:opacity .4s}
 #sub.show{opacity:1}
+#sub .por,#toast .por{display:none;width:46px;height:46px;border-radius:50%;margin:0 auto 6px;box-shadow:0 0 0 2px rgba(233,182,92,.6)}
+#sub .por.on,#toast .por.on{display:block}
+.por.shadow{filter:brightness(.18) saturate(0) drop-shadow(0 0 1px #a78bfa);box-shadow:0 0 0 2px rgba(167,139,250,.8),0 0 14px rgba(167,139,250,.7)!important}
+#toast .por{float:left;margin:0 12px 0 0;width:40px;height:40px}
 #sub b{display:block;font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.18em;margin-bottom:6px}
 #sub p{margin:0;font-size:clamp(16px,4.6cqw,22px);line-height:1.4;text-shadow:0 2px 10px #000,0 0 2px #000}
 #sub small{display:block;margin-top:10px;font-size:12px;opacity:.55;letter-spacing:.06em}
@@ -158,9 +162,9 @@ body.arena #toast{display:none}
 <canvas id="c" aria-label="Shadows of Kanchi, Chapter 1 playable slice"></canvas>
 <div class="layer" id="hud"><div id="eye"><i></i><span id="eyeTxt">In the sun</span></div><div id="hudR"><div id="chap">I · The Coronation of Ash</div><div id="mem"><i></i><span id="memN">0/8</span><span id="tm">0:00</span></div></div></div>
 <div id="obj"><span class="ic"></span><p></p></div>
-<div id="toast"><b></b><p></p></div>
+<div id="toast"><img class="por" alt=""><b></b><p></p></div>
 <div class="bar t"></div><div class="bar b"></div>
-<div id="sub"><b></b><p></p><small></small></div>
+<div id="sub"><img class="por" alt=""><b></b><p></p><small></small></div>
 <div class="layer" id="death"><p></p></div>
 <div class="layer" id="credits">
   <div class="k">END OF CHAPTER I</div><h2>The Coronation of Ash</h2>
@@ -669,7 +673,7 @@ function buildTerraces(){
     const m = new THREE.Mesh(g, p.wall ? MAT.dark : mats); m.castShadow = m.receiveShadow = true; group.add(m);
     if (!p.wall){
       const pl = plinthGeometry(w); pl.translate(p.x0, p.top - 1.78, p.zf);
-      const pm = new THREE.Mesh(pl, MAT.stoneBig); pm.castShadow = pm.receiveShadow = true; group.add(pm);
+      const pm = new THREE.Mesh(pl, MAT.stoneBig); pm.castShadow = pm.receiveShadow = true; group.add(pm); PROC.plinths.push({pm, p});
       // coping stones with a small overhang
       const c = box(w + 0.06, 0.12, 0.3); c.translate(p.x0 + w/2, p.top - 0.06, p.zf + 0.1); worldUV(c, 4);
       const cm = new THREE.Mesh(c, MAT.flag); cm.receiveShadow = true; group.add(cm);
@@ -1343,9 +1347,15 @@ function updateObjectives(dt){
 }
 
 function startCut(lines, then){ toastQ = []; toastCur = null; $('toast').classList.remove('show'); $('obj').className = ''; setHintBtn(null); stickAx = 0; state = 'cut'; cutLines = lines; cutI = 0; cutT = 0; cutThen = then; document.body.classList.add('cine'); showSub(); }
+function setPortrait(el, sp){
+  const img = el.querySelector('.por'), young = inArena || cutLines === BRIDGE, src = young ? 'assets/portraits/ilan16.webp' : 'assets/portraits/ilan.webp';
+  const on = sp === 'ILAN' || sp === 'VO' || sp === 'NIZHAL';
+  img.className = 'por' + (on ? ' on' : '') + (sp === 'NIZHAL' ? ' shadow' : '');
+  if (on && img.getAttribute('src') !== src) img.src = src;
+}
 function showSub(){
   const L = cutLines[cutI], s = $('sub');
-  s.className = 'show sp-' + L.sp;
+  s.className = 'show sp-' + L.sp; setPortrait(s, L.sp);
   s.querySelector('b').textContent = L.sp === 'VO' ? 'ILAN' : L.sp;
   s.querySelector('p').textContent = L.t;
   s.querySelector('small').textContent = TOUCH ? 'Tap to continue' : 'Enter to continue';
@@ -1461,7 +1471,7 @@ function update(dt){
   // story lines (separate from the tutorial card)
   if (!toastCur && toastQ.length){ toastCur = Object.assign(toastQ.shift(), {t:0}); const el = $('toast'); el.className = 'show sp-' + toastCur.sp;
     const label = {HINT:'', VO:'ILAN', MEM:'SHADOW-MEMORY'}[toastCur.sp] ?? toastCur.sp;
-    el.querySelector('b').textContent = label; el.querySelector('p').textContent = toastCur.text; el.querySelector('b').style.display = label ? 'block' : 'none'; }
+    el.querySelector('b').textContent = label; el.querySelector('p').textContent = toastCur.text; el.querySelector('b').style.display = label ? 'block' : 'none'; setPortrait(el, toastCur.sp); }
   if (toastCur && (toastCur.t += dt) > toastCur.dur){ toastCur = null; $('toast').classList.remove('show'); }
   for (const k in pressed) delete pressed[k];
 }
@@ -1875,7 +1885,7 @@ function exitArena(){
   sun.color.setHex(SAVED.sunCol); sun.intensity = SAVED.sunI; hemi.color.setHex(SAVED.hemiC); hemi.groundColor.setHex(SAVED.hemiG); scene.fog.color.setHex(SAVED.fogC); scene.fog.density = SAVED.fogD; hemi.intensity = SAVED.hemiI;
   skyMat.uniforms.sunDir.value.copy(TO_SUN); skyMat.uniforms.mem.value = 0; setSky('skyNoon', 0.5, 1.15, 0.5, TO_SUN, 2.4); grade.uniforms.mem.value = 0;
   document.body.classList.remove('arena'); setBtnMode('play'); ilan.root.scale.setScalar(1); ilan.tilt.rotation.set(0, 0, 0); $('jkhud').className = ''; $('jkring').style.opacity = 0;
-  for (const b of bullRigs) b.root.visible = false;
+  for (const b of bullRigs){ b.root.visible = false; if (b.bb) b.bb.mesh.visible = false; }
 }
 const JK_HINTS = {
   wait:{tk:'GRIP', kk:'Space', btn:'jump', text:'Bull out of the gate! Tap Grip as the gold ring closes on his hump.'},
@@ -1984,6 +1994,7 @@ function updateJK(dt){
 }
 function animBull(R, run, buck){
   const ph = R.ph;
+  if (R.bb){ R.bb.U.uPhase.value = ph; R.bb.U.uRun.value = run; R.bb.U.uBuck.value = buck; }
   R.legs.forEach((lg, k) => { const off = (lg.front ? 0 : Math.PI) + (k % 2)*0.6;
     lg.L.rotation.z = run*Math.sin(ph + off)*0.65 + buck*(lg.front ? -0.5 : 0.25);
     lg.K.rotation.z = -Math.max(0, Math.sin(ph + off + 1.2))*0.9*run - buck*(lg.front ? 0.8 : 0); });
@@ -2002,10 +2013,13 @@ function jkVisuals(dt){
     if (jk.phase === 'ride' || jk.phase === 'snatch'){ const u = jk.buckT/jk.per; by = Math.sin(u*Math.PI)*0.32*(jk.phase === 'ride' ? 1 : 0.3); pitch = Math.sin(u*Math.PI*2)*0.22; roll = jk.dir*Math.sin(Math.min(1, u/0.6)*Math.PI)*0.18; buck = Math.sin(u*Math.PI); animBull(R, 0.3, buck); }
     else animBull(R, jk.phase === 'wait' || jk.paused > 0 ? 0 : 1, 0);
     R.root.position.set(jk.bx, by, 0); R.body.rotation.set(roll, 0, pitch); R.head.rotation.z = -jk.dip*0.7 + (jk.phase === 'wait' ? Math.sin(time*3)*0.1 : 0);
-    if (jk.phase === 'wait'){ R.root.position.x = AX + 45.5 + Math.sin(time*7)*0.05; }
+    if (R.bb){ const b = R.bb; b.mesh.visible = true; b.mesh.position.set(jk.bx - 0.42 - b.humpX, by, 0); b.mesh.rotation.z = -pitch*0.6;
+      b.U.uDip.value = jk.dip + (jk.phase === 'wait' ? 0.15 + Math.sin(time*3)*0.12 : 0); }
+    bullRigs.forEach(o => { if (o.bb && o !== R) o.bb.mesh.visible = false; });
+    if (jk.phase === 'wait'){ R.root.position.x = AX + 45.5 + Math.sin(time*7)*0.05; if (R.bb) R.bb.mesh.position.x = R.root.position.x - 0.42 - R.bb.humpX; }
     // Ilan
     if (jk.phase === 'ride' || jk.phase === 'snatch'){
-      ilan.root.position.set(jk.bx - 0.1, by + 1.0, 0.2); faceRig(ilan, -1); poseRig(ilan, {name:'ride'});
+      ilan.root.position.set(jk.bx - 0.1, by + (R.bb ? R.bb.humpY - 0.78 : 1.0), 0.2); faceRig(ilan, -1); poseRig(ilan, {name:'ride'});
       ilan.tilt.rotation.z = jk.b*0.5 + roll; ilan.tilt.rotation.x = 0;
       if (jk.phase === 'snatch' && jk.snatchTry) { ilan.sh[1].rotation.x = -2.4; }
       focusX = jk.bx - 1.2;
@@ -2029,12 +2043,13 @@ function jkVisuals(dt){
     $('beatdot').classList.toggle('on', jk.phase === 'ride' && !!jk.inWin);
     const ring = $('jkring');
     if (jk.phase === 'charge' && jk.tta < 1.3 && jk.tta > -0.3){
-      const p = new THREE.Vector3(jk.bx - 0.42, 2.0, 0).project(camera);
+      const p = new THREE.Vector3(jk.bx - 0.42, R.bb ? R.bb.humpY + 0.15 : 2.0, 0).project(camera);
       ring.style.left = ((p.x*0.5 + 0.5)*SW()) + 'px'; ring.style.top = ((-p.y*0.5 + 0.5)*SH()) + 'px';
       ring.style.transform = `translate(-50%,-50%) scale(${1 + Math.max(0, jk.tta)*2.4})`; ring.style.opacity = 1;
       ring.classList.toggle('now', Math.abs(jk.tta) < 0.11);
     } else ring.style.opacity = 0;
   } else {
+    for (const o of bullRigs) if (o.bb) o.bb.mesh.visible = false;
     // cutscenes in the arena: young Ilan at the barricade, or after the last bull, at the arena's end with the prince
     const out = cutLines === JK_OUTRO;
     ilan.root.position.set(out ? AX + 2.8 : ILAN_X, 0, 0); faceRig(ilan, 1); ilan.tilt.rotation.set(0, 0, 0); poseRig(ilan, {name:'idle', t:time});
@@ -2043,7 +2058,7 @@ function jkVisuals(dt){
   }
   updatePS(glowPS, dt); updatePS(smokePS, dt);
   if (state === 'jk'){
-    const f = camFrame(0, 1.5, PORTRAIT() ? 6.5 : 15); camLookT.set(focusX, f.ly, 0); camPosT.set(focusX + 0.4, f.ly + 1.2, f.dist);
+    const f = camFrame(0, 1.5, PORTRAIT() ? 6.5 : 11.5); camLookT.set(focusX, f.ly, 0); camPosT.set(focusX + 0.4, f.ly + 1.2, f.dist);
   }
   const k = state === 'cut' ? Math.min(1, dt*1.4) : Math.min(1, dt*5);
   camPos.lerp(camPosT, k); camLook.lerp(camLookT, k);
@@ -2070,11 +2085,13 @@ const ART_FILES = {
   crw05:'billboards/CRW-05_father-and-son_front.webp', crw06:'billboards/CRW-06_girl-pointing_front.webp', crw07:'billboards/CRW-07_elder-with-stick_front.webp',
   crw08:'billboards/CRW-08_youth-whistling_front.webp', crw09:'billboards/CRW-09_woman-with-baby_front.webp', crw10:'billboards/CRW-10_bull-tamer_front.webp',
   ashlar:'tex/TEX-01_granite-ashlar.jpg', flag:'tex/TEX-02_flagstone.jpg', earth:'tex/TEX-05_arena-earth.jpg',
-  skyNoon:'sky/SKY-01_stopped-noon.jpg', skyPongal:'sky/SKY-02_pongal-morning.jpg'
+  skyNoon:'sky/SKY-01_stopped-noon.jpg', skyPongal:'sky/SKY-02_pongal-morning.jpg',
+  bull1:'billboards/ANI-01_vellaiyan_side.webp', bull2:'billboards/ANI-02_karuppan_side.webp', bull3:'billboards/ANI-03_sivappan_side.webp',
+  plinth:'tex/ARC-05_plinth-strip.jpg'
 };
 // height in metres of each person or object as drawn (raised arms included)
 const CROWD = [['crw01', 2.15], ['crw02', 1.7], ['crw03', 2.0], ['crw05', 2.55], ['crw06', 1.28], ['crw07', 1.62], ['crw08', 2.12], ['crw09', 1.62]];
-const PROC = {skyline:[], terraceCrowd:[], lowerCrowd:[], lane:[], lamps:[]};
+const PROC = {skyline:[], terraceCrowd:[], lowerCrowd:[], lane:[], lamps:[], plinths:[]};
 const texLoader = new THREE.TextureLoader();
 const artReady = Promise.all(Object.entries(ART_FILES).map(([k, f]) => new Promise(res => texLoader.load(ART_DIR + f,
   t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; ART[k] = t; res(); }, undefined, () => res()))));
@@ -2149,12 +2166,70 @@ function applyWorldArt(){
     const laneKeys = ['crw01', 'crw03', 'crw08', 'crw07'];
     PROC.lane.forEach((m, i) => { m.visible = false; const k = laneKeys[i % laneKeys.length], h = CROWD.find(c => c[0] === k)[1]; billboard(k, h*0.92, m.position.x, m.position.y, m.position.z, {stone:true}); });
   }
+  if (ART.plinth){
+    const img = ART.plinth.image, H = 1.76, tile = H*img.width/img.height, nrm = normalFromImage(img, 3);
+    for (const {pm, p} of PROC.plinths){
+      pm.visible = false; const len = p.x1 - p.x0, t = ART.plinth.clone(), n = nrm.clone();
+      for (const x of [t, n]){ x.wrapS = THREE.RepeatWrapping; x.repeat.set(len/tile, 1); x.needsUpdate = true; }
+      const m = new THREE.MeshStandardMaterial({map:t, normalMap:n, roughness:0.88, emissive:new THREE.Color(1, 1, 1), emissiveMap:t, emissiveIntensity:0.1});
+      const strip = new THREE.Mesh(new THREE.PlaneGeometry(len, H), m); strip.position.set(p.x0 + len/2, p.top - H/2 - 0.02, p.zf + 0.21); strip.receiveShadow = true; scene.add(strip);
+    }
+  }
   if (ART.pillar && PROC.pillars){ const pil = PROC.pillars; pil.visible = false; const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), list = [];
     for (let i = 0; i < pil.count; i++){ pil.getMatrixAt(i, m4); m4.decompose(p, q, s); list.push([p.x, 0, p.z, 1]); }
     billboardCrowd('pillar', HALL.y0, list, {glow:0.1}); }
   if (ART.lamp) for (const L of PROC.lamps){ L.l.visible = false; L.flames.forEach(f => f.visible = false); billboard('lamp', 1.45, L.x, L.y, L.z, {glow:0.35, shadow:false}); }
 }
+const BULL_ART = [
+  {key:'bull1', height:2.2,  front:[0.38, 0.53], hind:[0.78, 0.96], belly:0.31, neck:[0.30, 0.65], hump:[0.45, 0.79], tail:0.92},
+  {key:'bull2', height:2.0,  front:[0.39, 0.55], hind:[0.79, 0.95], belly:0.33, neck:[0.27, 0.65], hump:[0.48, 0.81], tail:0.92},
+  {key:'bull3', height:2.29, front:[0.33, 0.49], hind:[0.81, 0.95], belly:0.30, neck:[0.25, 0.65], hump:[0.44, 0.83], tail:0.93}
+];
+// ---------- photographic bulls ----------
+// Each bull is its generated side-view photo on a finely divided plane. A vertex shader swings the
+// legs in a gallop, folds them in a buck, sways the tail and drops the head for the toss.
+// Regions are in image coordinates (u from the nose end, v from the hooves).
+function bullBillboard(R, key, P){
+  const tex = ART[key], img = tex.image, H = P.height, W = H*img.width/img.height;
+  const g = new THREE.PlaneGeometry(W, H, 48, 32); g.translate(0, H/2, 0);
+  const U = {uPhase:{value:0}, uRun:{value:0}, uBuck:{value:0}, uDip:{value:0}, uW:{value:W}, uH:{value:H},
+    uBelly:{value:P.belly}, uFront:{value:new THREE.Vector2(...P.front)}, uHind:{value:new THREE.Vector2(...P.hind)},
+    uNeck:{value:new THREE.Vector2(...P.neck)}, uTail:{value:P.tail}};
+  const m = new THREE.MeshStandardMaterial({map:tex, alphaTest:0.5, side:THREE.DoubleSide, roughness:0.75, emissive:new THREE.Color(1, 1, 1), emissiveMap:tex, emissiveIntensity:0.14});
+  m.onBeforeCompile = s => {
+    Object.assign(s.uniforms, U);
+    s.vertexShader = 'uniform float uPhase, uRun, uBuck, uDip, uW, uH, uBelly, uTail; uniform vec2 uFront, uHind, uNeck;\n' + s.vertexShader.replace('#include <begin_vertex>', `
+      vec3 transformed = vec3(position);
+      vec2 q = uv;
+      // legs: below the belly line, swing about the shoulder and hip; the lower leg swings furthest
+      float k = clamp((uBelly - q.y)/uBelly, 0., 1.);
+      float fr = smoothstep(uFront.x - .02, uFront.x + .02, q.x)*(1. - smoothstep(uFront.y - .02, uFront.y + .02, q.x));
+      float hi = smoothstep(uHind.x - .02, uHind.x + .02, q.x)*(1. - smoothstep(uHind.y - .02, uHind.y + .02, q.x));
+      float sideA = step(.5, fract((q.x - uFront.x)/max(.001, (uFront.y - uFront.x)))), sideB = step(.5, fract((q.x - uHind.x)/max(.001, (uHind.y - uHind.x))));
+      float sw = fr*sin(uPhase + sideA*1.2) + hi*sin(uPhase + 3.1416 + sideB*1.2);
+      transformed.x += sw*k*k*uH*uBelly*.55*uRun;
+      transformed.y += max(0., sw)*k*uH*.05*uRun;
+      // buck: front legs tuck back, hind legs kick out
+      transformed.x += (fr*k*.22 - hi*k*.28)*uH*uBelly*uBuck;
+      // head toss: rotate the head and neck about the neck point, downward
+      float hw = 1. - smoothstep(uNeck.x - .06, uNeck.x + .02, q.x);
+      vec2 piv = vec2((uNeck.x - .5)*uW, uNeck.y*uH), p = transformed.xy - piv;
+      float a = uDip*.55*hw; transformed.xy = piv + vec2(p.x*cos(a) - p.y*sin(a), p.x*sin(a) + p.y*cos(a));
+      // tail
+      float tw = smoothstep(uTail, 1., q.x)*(1. - q.y);
+      transformed.x += sin(uPhase*1.3)*tw*.12;
+    `);
+    // drop the pale studio floor-shadow baked under the hooves (the hooves themselves are dark)
+    s.fragmentShader = s.fragmentShader.replace('#include <alphatest_fragment>',
+      '#include <alphatest_fragment>\n if (vMapUv.y < .07 && dot(diffuseColor.rgb, vec3(.299,.587,.114)) > .42) discard;');
+  };
+  const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = false; mesh.visible = false; scene.add(mesh);
+  R.bb = {mesh, U, W, H, humpX:(P.hump[0] - 0.5)*W, humpY:P.hump[1]*H};
+  R.body.visible = false;
+}
+
 function applyArenaArt(){
+  BULL_ART.forEach((P, i) => { if (ART[P.key] && bullRigs[i] && !bullRigs[i].bb) bullBillboard(bullRigs[i], P.key, P); });
   if (ART.earth && ARENA.sand){ const m = ARENA.sand.material; useSurface(m, ART.earth, 30, 2.5); m.map.repeat.set(30, 14); m.normalMap.repeat.set(30, 14); m.color.set(0xffffff); }
   if (ART.fence){ ARENA.posts.visible = ARENA.panel.visible = false;
     const h = 2.0, w = h*ART.fence.image.width/ART.fence.image.height; for (let x = 0.2; x < 46; x += w*0.97) billboard('fence', h, AX + x + w/2, 0, -2.6, {glow:0.12}); }
