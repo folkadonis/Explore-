@@ -2030,7 +2030,7 @@ function updateJK(dt){
     }
   }
   // the parai never stops
-  paraiT -= dt; if (paraiT <= 0){ paraiT = 0.2; paraiN++; audio.sfx(paraiN % 4 === 0 ? 'parai1' : 'parai2'); }
+  paraiT -= dt; if (paraiT <= 0){ paraiT = 60/MOODS.pongal.bpm/2; paraiN++; audio.sfx(paraiN % 4 === 0 ? 'parai1' : 'parai2'); }
 }
 function animBull(R, run, buck){
   const ph = R.ph;
@@ -2342,6 +2342,119 @@ function applyArenaArt(){
 // =====================================================================
 // Audio: a low drone in the stopped city, and a few sounds made from filtered noise
 // =====================================================================
+// =====================================================================
+// Original score, generated live: tanpura drone, veena, nadaswaram, thavil and kombu, in Carnatic ragas.
+// Each scene sets a mood; instruments fade in and out with it.
+// =====================================================================
+const RAGAS = {
+  shubhapantuvarali:[0, 1, 3, 6, 7, 8, 11],   // the stopped city: grief, stillness
+  mohanam:[0, 2, 4, 7, 9],                   // Pongal morning: bright, festive
+  kalyani:[0, 2, 4, 6, 7, 9, 11],            // the title: grand, royal
+  shanmukhapriya:[0, 2, 3, 6, 7, 8, 10]      // the chase: urgent
+};
+const MOODS = {
+  title: {raga:'kalyani', bpm:62, tanpura:1, veena:0.9, nadas:0.5, thavil:0, kombu:1},
+  noon:  {raga:'shubhapantuvarali', bpm:54, tanpura:1, veena:0.75, nadas:0, thavil:0},
+  chase: {raga:'shanmukhapriya', bpm:132, tanpura:0.8, veena:0, nadas:0.7, thavil:1},
+  pongal:{raga:'mohanam', bpm:116, tanpura:0.8, veena:0, nadas:1, thavil:0.7},
+  end:   {raga:'shubhapantuvarali', bpm:46, tanpura:0.9, veena:1, nadas:0, thavil:0}
+};
+const SA = 146.83;   // D3
+const music = {
+  mood:null, next:0, step:0, deg:0, phrase:0,
+  init(C, out){
+    this.C = C; this.out = C.createGain(); this.out.gain.value = 0.55; this.out.connect(out);
+    // a little hall reverb: two filtered feedback delays
+    const wet = C.createGain(); wet.gain.value = 0.28; wet.connect(this.out);
+    for (const [dt, fb] of [[0.137, 0.45], [0.211, 0.4]]){ const d = C.createDelay(1); d.delayTime.value = dt; const g = C.createGain(); g.gain.value = fb; const lp = C.createBiquadFilter(); lp.frequency.value = 2400;
+      d.connect(lp); lp.connect(g); g.connect(d); lp.connect(wet); this.revIn = this.revIn || C.createGain(); this.revIn.connect(d); }
+    this.bus = {};
+    for (const k of ['tanpura', 'veena', 'nadas', 'thavil', 'kombu']){ const g = C.createGain(); g.gain.value = 0; g.connect(this.out); g.connect(this.revIn); this.bus[k] = g; }
+  },
+  freq(deg){ const R = RAGAS[MOODS[this.mood].raga], n = R.length, o = Math.floor(deg/n), i = ((deg % n) + n) % n; return SA*Math.pow(2, (R[i] + 12*o)/12); },
+  set(mood){
+    if (!this.C || mood === this.mood) return;
+    const first = !this.mood; this.mood = mood; const M = MOODS[mood], t = this.C.currentTime;
+    for (const k in this.bus) this.bus[k].gain.setTargetAtTime(M[k] || 0, t, first ? 1.2 : 0.8);
+    if (M.kombu) this.kombu(t + 0.3);
+    this.phrase = 0;
+  },
+  tick(){
+    if (!this.C || !this.mood) return;
+    const C = this.C, M = MOODS[this.mood], beat = 60/M.bpm, sub = beat/2;
+    if (this.next < C.currentTime) this.next = C.currentTime + 0.05;
+    while (this.next < C.currentTime + 0.25){
+      const t = this.next, s = this.step++;
+      // tanpura: Pa, Sa', Sa', Sa, one string every beat, endlessly
+      if (s % 2 === 0) this.tanpura(t, [7, 12, 12, 0][(s/2) % 4]);
+      if (M.veena && s % 2 === 0 && Math.random() < 0.55) this.veena(t, this.walk(0.35));
+      if (M.nadas && s % 4 === 0) this.nadas(t, this.walk(0.5), beat*(Math.random() < 0.3 ? 4 : 2));
+      if (M.thavil) this.thavil(t, s);
+      this.next += sub;
+    }
+  },
+  // melody: a gentle random walk around the raga, with phrases resting on Sa or Pa
+  walk(jump){
+    this.phrase++;
+    if (this.phrase % 8 === 0){ this.deg = Math.random() < 0.5 ? 0 : 4; return this.deg; }
+    this.deg += (Math.random() < 0.5 ? -1 : 1)*(Math.random() < jump ? 2 : 1);
+    this.deg = Math.max(-2, Math.min(9, this.deg)); return this.deg;
+  },
+  tanpura(t, semi){
+    const C = this.C, f = SA/2*Math.pow(2, semi/12);
+    for (const [m, a] of [[1, 0.12], [2, 0.05], [3, 0.03], [4.01, 0.02]]){
+      const o = C.createOscillator(), g = C.createGain(); o.type = 'sine'; o.frequency.value = f*m; o.detune.value = (Math.random() - .5)*6;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0008, t + 3.2);
+      o.connect(g); g.connect(this.bus.tanpura); o.start(t); o.stop(t + 3.3);
+    }
+  },
+  // veena: a plucked string with the characteristic slide (gamaka) into the note
+  veena(t, deg){
+    const C = this.C, f = this.freq(deg), from = this.freq(deg + (Math.random() < 0.5 ? 1 : -1));
+    for (const [m, a, ty] of [[1, 0.16, 'triangle'], [2, 0.05, 'sine'], [3, 0.025, 'sine']]){
+      const o = C.createOscillator(), g = C.createGain(); o.type = ty;
+      o.frequency.setValueAtTime(from*m, t); o.frequency.exponentialRampToValueAtTime(f*m, t + 0.09);
+      if (Math.random() < 0.35){ o.frequency.setValueAtTime(f*m, t + 0.35); o.frequency.linearRampToValueAtTime(f*m*1.03, t + 0.5); o.frequency.linearRampToValueAtTime(f*m, t + 0.65); }
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0008, t + 1.8);
+      o.connect(g); g.connect(this.bus.veena); o.start(t); o.stop(t + 1.9);
+    }
+  },
+  // nadaswaram: a bright reed, sustained, with vibrato and glides between notes
+  nadas(t, deg, dur){
+    const C = this.C, f = this.freq(deg + 7), from = this.freq(deg + 6);
+    const o = C.createOscillator(), o2 = C.createOscillator(), bp = C.createBiquadFilter(), lp = C.createBiquadFilter(), g = C.createGain(), lfo = C.createOscillator(), lg = C.createGain();
+    o.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = 7;
+    for (const x of [o, o2]){ x.frequency.setValueAtTime(from, t); x.frequency.exponentialRampToValueAtTime(f, t + 0.12); }
+    lfo.frequency.value = 5.4; lg.gain.value = f*0.012; lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+    bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = 1.4; lp.frequency.value = 3200;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.08); g.gain.setValueAtTime(0.06, t + dur*0.8); g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(bp); o2.connect(bp); bp.connect(lp); lp.connect(g); g.connect(this.bus.nadas);
+    for (const x of [o, o2, lfo]){ x.start(t); x.stop(t + dur + 0.05); }
+  },
+  // thavil: a deep stroke on one head, a sharp slap on the other
+  thavil(t, s){
+    const C = this.C, pat = this.mood === 'chase' ? 'X.x.Xx.xX.x.XxXx' : 'X..xX.x.X..xX.xx';
+    const c = pat[s % pat.length]; if (c === '.') return;
+    if (c === 'X'){ const o = C.createOscillator(), g = C.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.18);
+      g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); g.connect(this.bus.thavil); o.start(t); o.stop(t + 0.32); }
+    const n = C.createBufferSource(), f = C.createBiquadFilter(), g = C.createGain(); n.buffer = audio.noise;
+    f.type = 'bandpass'; f.frequency.value = c === 'X' ? 900 : 2600; f.Q.value = 1.6;
+    g.gain.setValueAtTime(c === 'X' ? 0.12 : 0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    n.connect(f); f.connect(g); g.connect(this.bus.thavil); n.start(t, Math.random()); n.stop(t + 0.08);
+  },
+  // kombu: the long curved horn that announces a king
+  kombu(t){
+    const C = this.C;
+    for (const [d, f0, f1] of [[0, SA/2, SA], [1.4, SA*0.75, SA*1.5]]){
+      const o = C.createOscillator(), lp = C.createBiquadFilter(), g = C.createGain(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0, t + d); o.frequency.exponentialRampToValueAtTime(f1, t + d + 0.35);
+      lp.frequency.setValueAtTime(400, t + d); lp.frequency.linearRampToValueAtTime(1800, t + d + 0.4);
+      g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(0.14, t + d + 0.3); g.gain.linearRampToValueAtTime(0, t + d + 1.3);
+      o.connect(lp); lp.connect(g); g.connect(this.bus.kombu); o.start(t + d); o.stop(t + d + 1.35);
+    }
+  }
+};
+
 const audio = {
   ctx:null,
   start(){
@@ -2352,11 +2465,7 @@ const audio = {
       const len = C.sampleRate*2, buf = C.createBuffer(1, len, C.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = Math.random()*2 - 1;
       this.noise = buf;
-      const drone = C.createGain(); drone.gain.value = 0.0; drone.connect(this.master);
-      const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.connect(drone);
-      for (const f of [65.41, 98.0, 130.8]){ const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = (Math.random() - .5)*8;
-        const g = C.createGain(); g.gain.value = f > 100 ? 0.25 : 0.5; o.connect(g); g.connect(lp); o.start(); }
-      drone.gain.linearRampToValueAtTime(0.05, C.currentTime + 4);
+      music.init(C, this.master);
       const wind = C.createBufferSource(); wind.buffer = buf; wind.loop = true;
       const bp = C.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.6;
       const wg = C.createGain(); wg.gain.value = 0.025; wind.connect(bp); bp.connect(wg); wg.connect(this.master); wind.start();
@@ -2393,6 +2502,14 @@ const audio = {
 // =====================================================================
 let last = performance.now(), frames = 0, acc = 0, ftAvg = 16, qT = 0;
 const FIXED = 1/120;
+function currentMood(){
+  if (state === 'title' || state === 'loading') return 'title';
+  if (inArena) return 'pongal';
+  if (state === 'credits' || (state === 'cut' && (cutLines === ENDING || cutLines === BRIDGE))) return 'end';
+  if (state === 'cut' && cutLines === INTRO) return cutI < 3 ? 'title' : 'noon';
+  if (hallSpawned && P.x > HALL.x0 - 2 && P.x < HALL.x1 + 2) return 'chase';
+  return 'noon';
+}
 function frame(now){
   const rdt = Math.min(0.1, (now - last)/1000); last = now;
   pollPad();
@@ -2408,11 +2525,12 @@ function frame(now){
     if (ftAvg > 24 && curDPR > 0.75){ curDPR = Math.max(0.75, curDPR - 0.15); renderer.setPixelRatio(curDPR); composer.setPixelRatio(curDPR); }
     else if (ftAvg < 14 && curDPR < DPR){ curDPR = Math.min(DPR, curDPR + 0.1); renderer.setPixelRatio(curDPR); composer.setPixelRatio(curDPR); }
     if (ftAvg > 34) bloom.enabled = false; }
+  if (audio.ctx){ music.set(currentMood()); music.tick(); }
   composer.render();
   requestAnimationFrame(frame);
 }
 window.__kanchi = { get frames(){ return frames; }, get P(){ return P; }, get state(){ return state; }, get shadows(){ return shadows; }, get target(){ return target; }, get walkers(){ return walkers; },
-  advance, held, pressed, CANOPIES, get jk(){ return jk; }, get jkScore(){ return jkScore; }, toArena(){ $('title').classList.add('hide'); enterArena(); $('sub').className = ''; document.body.classList.remove('cine'); state = 'jk'; startBull(0); }, startBull(i){ startBull(i); }, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
+  advance, held, pressed, CANOPIES, get music(){ return {mood:music.mood, step:music.step}; }, get jk(){ return jk; }, get jkScore(){ return jkScore; }, toArena(){ $('title').classList.add('hide'); enterArena(); $('sub').className = ''; document.body.classList.remove('cine'); state = 'jk'; startBull(0); }, startBull(i){ startBull(i); }, get objI(){ return objI; }, get memCount(){ return memCount; }, setStick(a){ stickAx = a; },
   skipToPlay(){ document.body.classList.remove('titled'); $('title').classList.add('hide'); $('sub').className = ''; document.body.classList.remove('cine'); state = 'play'; $('hud').classList.remove('hide'); },
   place(x, y, face=1){ P.x = x; P.y = y; P.vx = P.vy = 0; P.face = face; camPos.set(x, y + 2.5, 13); camLook.set(x, y + 1, 0); camPosT.copy(camPos); camLookT.copy(camLook); } };
 

@@ -53,6 +53,20 @@ Each retry widens the timing window, and Captain Veeran gives a tip. After three
 
 **The slice covers:** waking on the temple steps, learning Shadow Step, the frozen elephant procession, a swinging banner timing jump, the canopy courtyard puzzle, the coronation hall chase, and the end beat with Prince Aditya.
 
+## Music
+
+The game has its own original score, generated live in the browser (no audio files). Each scene has a raga and its own instruments:
+
+| Scene | Raga | Instruments |
+|---|---|---|
+| Title and opening | Kalyani (grand, royal) | Tanpura, veena, nadaswaram, kombu horn fanfare |
+| The stopped city | Shubhapantuvarali (grief, stillness) | Tanpura, sparse veena with gamakas |
+| Hall chase | Shanmukhapriya (urgent) | Tanpura, nadaswaram, fast thavil |
+| Jallikattu | Mohanam (bright, festive) | Tanpura, nadaswaram, thavil, parai |
+| Ending | Shubhapantuvarali, slower | Tanpura, veena |
+
+Copyrighted film soundtracks (such as *Ponniyin Selvan*) can't be included. Licensed recordings you own the rights to can be dropped in later as audio files.
+
 ## Next steps
 
 - Generate concept art once there are Higgsfield credits (`art/prompts.md`).
